@@ -1,0 +1,18 @@
+---
+title: "Copulas in Stan: Modeling Spatial Dependence in Generalized Extreme Value Distributions"
+author: 
+  name: Brynjólfur Gauti Guðrúnar Jónsson
+  affiliation: University of Iceland
+  email: brynjolfur@hi.is
+  url: bggj.is
+format: 
+  pdf: default
+  docx: default
+---
+
+When modeling spatially distributed Generalized Extreme Value (GEV) data in Stan, we can relatively easily add spatial dependence to the parameters governing each location's distribution (nearby locations have similar parameter values) but we should also model the dependence in the observed data itself (i.e. extreme events tend to happen at similar times in nearby locations). 
+
+In this talk, I will cover how to use copulas in Stan to incorporate data-level spatial dependence in the GEV distribution for improved modeling of extreme precipitation in large datasets, focusing on copulas based on Gaussian Markov random fields (GMRF) that can approximate the data-level dependence while aiming to keep the computation-time feasible.
+
+The talk will quickly cover how to include spatial dependence in GEV parameters using the Besag-York-Mollié model before moving on to the modeling of data-level dependence with GMRF copulas. The talk ends with results from a simulation study showing how this might be feasible in a spatial process with GEV margins and data-level dependence described by a GMRF copula.
+
