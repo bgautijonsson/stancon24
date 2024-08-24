@@ -3,6 +3,7 @@ library(here)
 library(arrow)
 library(gt)
 library(gtExtras)
+library(scales)
 theme_set(bggjphd::theme_bggj())
 
 d <- here("casestudies", "gev_margins", "results") |>
@@ -26,12 +27,27 @@ d |>
   distinct() |>
   arrange(iter) |>
   mutate(
-    grid_size = dim1 * dim2,
-    time_obs = time / n_obs
-  )
-  ggplot(aes(grid_size, time_obs, color = model)) +
-  geom_line() +
-  geom_point()
+    grid_size = dim1 * dim2
+  ) |> 
+  pivot_wider(names_from = model, values_from = time) |> 
+  pivot_longer(c(circulant, folded)) |> 
+  mutate(
+    diff = value / exact
+  ) |> 
+  ggplot(aes(grid_size, diff, color = name)) +
+  geom_hline(yintercept = 1, lty = 2) +
+  geom_smooth(method = "lm") +
+  geom_point() +
+  scale_x_continuous(
+    trans = "log10",
+    breaks = breaks_log()
+  ) +
+  scale_y_continuous(
+    trans = "log10",
+    labels = \(x) scales::percent(x - 1),
+    breaks = breaks_log()
+  ) +
+  facet_wrap("nu", labeller = label_both)
 
 
 

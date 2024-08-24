@@ -1,0 +1,19 @@
+---
+title: "Your Presentation Title"
+author: "Your Name"
+date: "2024-01-01"
+bibliography: references.bib
+---
+
+## Introduction
+
+- Welcome to my StanCon2024 presentation
+- Today, we'll discuss...
+
+## Main Content
+
+- Point 1
+- Point 2
+- Point 3
+
+## Code Example

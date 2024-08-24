@@ -1,3 +1,12 @@
+#' Fit exact Matérn model
+#'
+#' This function fits an exact Matérn model using Stan
+#'
+#' @param stan_data A list containing the data for Stan
+#' @param inits A list of initial values for the parameters
+#' @param recomp Logical, whether to recompile the Stan model
+#'
+#' @return A tibble with parameter estimates and diagnostics
 #' @export
 fit_exact <- function(stan_data, inits, recomp = FALSE) {
   exact <- cmdstanr::cmdstan_model(
@@ -24,6 +33,15 @@ fit_exact <- function(stan_data, inits, recomp = FALSE) {
     )
 }
 
+#' Fit folded Matérn model
+#'
+#' This function fits a folded approximation of a Matérn model using Stan
+#'
+#' @param stan_data A list containing the data for Stan
+#' @param inits A list of initial values for the parameters
+#' @param recomp Logical, whether to recompile the Stan model
+#'
+#' @return A tibble with parameter estimates and diagnostics
 #' @export
 fit_folded <- function(stan_data, inits, recomp = FALSE) {
   folded <- cmdstanr::cmdstan_model(
@@ -49,6 +67,15 @@ fit_folded <- function(stan_data, inits, recomp = FALSE) {
     )
 }
 
+#' Fit circulant Matérn model
+#'
+#' This function fits a circulant approximation of a Matérn model using Stan
+#'
+#' @param stan_data A list containing the data for Stan
+#' @param inits A list of initial values for the parameters
+#' @param recomp Logical, whether to recompile the Stan model
+#'
+#' @return A tibble with parameter estimates and diagnostics
 #' @export
 fit_circulant <- function(stan_data, inits, recomp = FALSE) {
   circulant <- cmdstanr::cmdstan_model(
@@ -74,6 +101,17 @@ fit_circulant <- function(stan_data, inits, recomp = FALSE) {
     )
 }
 
+#' Prepare data for Matérn models
+#'
+#' This function prepares data for fitting Matérn models with GEV margins
+#'
+#' @param n_obs Number of observations
+#' @param dim A vector of length 2 specifying the dimensions of the spatial grid
+#' @param rho A vector of length 2 specifying the spatial correlation parameters
+#' @param nu The smoothness parameter of the Matérn covariance
+#' @param pars A list containing GEV parameters (mu, sigma, xi)
+#'
+#' @return A list containing stan_data and initial values for the model
 #' @export
 prep_data <- function(n_obs, dim, rho, nu, pars) {
   z <- stdmatern::rmatern_copula(n_obs, dim, rho, nu)
@@ -114,6 +152,18 @@ prep_data <- function(n_obs, dim, rho, nu, pars) {
   list(stan_data = stan_data, inits = inits)
 }
 
+#' Fit all Matérn models
+#'
+#' This function fits exact, circulant, and folded Matérn models
+#'
+#' @param n_obs Number of observations
+#' @param dim A vector of length 2 specifying the dimensions of the spatial grid
+#' @param rho A vector of length 2 specifying the spatial correlation parameters
+#' @param nu The smoothness parameter of the Matérn covariance
+#' @param pars A list containing GEV parameters (mu, sigma, xi)
+#' @param recomp Logical, whether to recompile the Stan models
+#'
+#' @return A tibble with parameter estimates and diagnostics
 #' @export
 fit_all <- function(n_obs, dim, rho, nu, pars, recomp = FALSE) {
   data <- prep_data(n_obs, dim, rho, nu, pars)
@@ -124,35 +174,10 @@ fit_all <- function(n_obs, dim, rho, nu, pars, recomp = FALSE) {
   circulant_results <- fit_circulant(stan_data, inits, recomp)
   folded_results <- fit_folded(stan_data, inits, recomp)
 
-  dplyr::bind_rows(
+  res <- dplyr::bind_rows(
     exact = exact_results,
     circulant = circulant_results,
     folded = folded_results
-  )
-}
-
-#' @export
-run_iteration <- function(iter, recomp = FALSE) {
-  n_obs <- sample(10:40, size = 1)
-  dim <- sample(5:25, size = 2, replace = TRUE)
-  rho <- stats::runif(n = 2, min = 0.05, max = 0.95)
-  nu <- sample(c(0, 1, 2), size = 1)
-
-  pars <- list(
-    mu = 6,
-    sigma = 2,
-    xi = 0.1
-  )
-
-
-
-  res <- fit_all(
-    n_obs,
-    dim,
-    rho,
-    nu,
-    pars,
-    recomp = recomp
   ) |>
     dplyr::left_join(
       dplyr::tibble(
@@ -172,6 +197,47 @@ run_iteration <- function(iter, recomp = FALSE) {
   res
 }
 
+#' Run a single iteration of the simulation study
+#'
+#' This function runs a single iteration of the simulation study. The results
+#' are saved to a parquet file in the results directory and returned as a tibble
+#'
+#' @param iter Iteration number (not used in the function body)
+#' @param recomp Logical, whether to recompile the Stan models
+#'
+#' @return A tibble with parameter estimates and diagnostics
+#' @export
+run_iteration <- function(iter, recomp = FALSE) {
+  n_obs <- sample(10:40, size = 1)
+  dim <- sample(5:25, size = 2, replace = TRUE)
+  rho <- stats::runif(n = 2, min = 0.05, max = 0.95)
+  nu <- sample(c(0, 1, 2), size = 1)
+
+  pars <- list(
+    mu = 6,
+    sigma = 2,
+    xi = 0.1
+  )
+
+
+
+  fit_all(
+    n_obs,
+    dim,
+    rho,
+    nu,
+    pars,
+    recomp = recomp
+  )
+}
+
+#' Save simulation results
+#'
+#' This function saves the results of a simulation iteration to a parquet file.
+#'
+#' @param res A tibble containing the results of a simulation iteration
+#'
+#' @return None (called for side effects)
 #' @export
 save_results <- function(res) {
   cur_results <- here::here(
