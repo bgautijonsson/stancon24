@@ -1,73 +1,14 @@
-matrix create_base_matrix(int dim1, int dim2, real rho1, real rho2) {
-  matrix[dim2, dim1] c = rep_matrix(0, dim2, dim1);
-  vector[dim1] c1 = rep_vector(0, dim1);
-  vector[dim2] c2 = rep_vector(0, dim2);
+/*
+  Folds a vector representing a 2D grid into a larger vector with symmetric repetitions.
+  This function is used to create a folded version of the data for the circulant approximation
+  of a Matérn covariance.
 
-  real scale1 = 1.0 / (1.0 - square(rho1));  
-  real scale2 = 1.0 / (1.0 - square(rho2));
+  @param x The input vector representing the original 2D grid data
+  @param n1 The first dimension of the original grid
+  @param n2 The second dimension of the original grid
 
-  c1[1] = 1 + square(rho1);
-  c1[2] = -rho1;
-  c1[dim1] = -rho1;
-  c1 *= scale1;
-
-  c2[1] = 1 + square(rho2);
-  c2[2] = -rho2;
-  c2[dim2] = -rho2;
-  c2 *= scale2;
-
-  // Set the first row
-  c[1, 1] = c1[1] + c2[1];  
-  c[1, 2] = c1[2];
-  c[1, dim1] = c1[dim1];
-
-  // Set the rest of the first column
-  c[2, 1] = c2[2];
-  c[dim2, 1] = c2[dim2];
-
-  return c;
-}
-
-complex_matrix compute_and_rescale_eigenvalues(matrix c, int nu) {
-  int dim2 = rows(c);
-  int dim1 = cols(c);
-  complex_matrix[dim2, dim1] eigs = fft2(c);
-  
-  // Apply nu and compute inverse
-  complex_matrix[dim2, dim1] inv_eigs = rep_matrix(0, dim2, dim1);
-  for (i in 1:dim2) {
-    for (j in 1:dim1) {
-      eigs[i, j] = pow(eigs[i, j], nu + 1);
-      inv_eigs[i, j] = 1.0 / eigs[i, j];
-    }
-  }
-  
-  // Compute marginal variance
-  real mvar = get_real(inv_fft2(inv_eigs)[1, 1]);
-  
-  // Scale eigenvalues
-  for (i in 1:dim2) {
-    for (j in 1:dim1) {
-      eigs[i, j] = mvar * eigs[i, j];
-    }
-  }
-  
-  return eigs;
-}
-
-vector matvec_prod(complex_matrix eigs, vector v) {
-  int dim2 = rows(eigs);
-  int dim1 = cols(eigs);
-  complex_matrix[dim2, dim1] v_mat = to_matrix(v, dim2, dim1);
-  
-  complex_matrix[dim2, dim1] fft_v = fft2(v_mat);
-  complex_matrix[dim2, dim1] prod = eigs .* fft_v;
-  complex_matrix[dim2, dim1] result_complex = inv_fft2(prod);
-  
-  return to_vector(get_real(result_complex));
-}
-
-
+  @return A vector of length 4 * n1 * n2 containing the folded data
+*/
 vector fold_data(vector x, int n1, int n2) {
   vector[4 * n1 * n2] folded;
   for (i in 1:n1) {
@@ -80,20 +21,4 @@ vector fold_data(vector x, int n1, int n2) {
     }
   }
   return folded;
-}
-
-real matern_folded_copula_lpdf(vector Z, complex_matrix eigs) {
-  int dim1 = cols(eigs);
-  int dim2 = rows(eigs);
-  vector[dim1 * dim2] Z_folded = fold_data(Z, dim1 %/% 2, dim2 %/% 2);
-  vector[dim1 * dim2] Qx = matvec_prod(eigs, Z_folded);
-  return - (dot_product(Z_folded, Qx) - sum(log(get_real(eigs))) - sum(square(Z_folded))) / 8.0;
-}
-
-real matern_folded_lpdf(vector X, vector mu, complex_matrix eigs) {
-  int dim1 = cols(eigs);
-  int dim2 = rows(eigs);
-  vector[dim1 * dim2] X_folded = fold_data(X - mu, dim1 %/% 2, dim2 %/% 2);
-  vector[dim1 * dim2] Qx = matvec_prod(eigs, X_folded);
-  return - (dot_product(X_folded, Qx) - sum(log(get_real(eigs)))) / 8.0;
 }

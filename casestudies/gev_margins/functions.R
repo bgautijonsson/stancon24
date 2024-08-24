@@ -1,9 +1,9 @@
 #' @export
-fit_exact <- function(stan_data, inits, force_recompile = FALSE) {
+fit_exact <- function(stan_data, inits, recomp = FALSE) {
   exact <- cmdstanr::cmdstan_model(
     here::here("casestudies", "gev_margins", "Stan", "exact.stan"),
     include_paths = here::here("stanfunctions"),
-    force_recompile = force_recompile,
+    force_recompile = recomp,
     quiet = TRUE
   )
 
@@ -25,11 +25,11 @@ fit_exact <- function(stan_data, inits, force_recompile = FALSE) {
 }
 
 #' @export
-fit_folded <- function(stan_data, inits, force_recompile = FALSE) {
+fit_folded <- function(stan_data, inits, recomp = FALSE) {
   folded <- cmdstanr::cmdstan_model(
     here::here("casestudies", "gev_margins", "Stan", "folded.stan"),
     include_paths = here::here("stanfunctions"),
-    force_recompile = force_recompile,
+    force_recompile = recomp,
     quiet = TRUE
   )
 
@@ -50,11 +50,11 @@ fit_folded <- function(stan_data, inits, force_recompile = FALSE) {
 }
 
 #' @export
-fit_circulant <- function(stan_data, inits, force_recompile = FALSE) {
+fit_circulant <- function(stan_data, inits, recomp = FALSE) {
   circulant <- cmdstanr::cmdstan_model(
     here::here("casestudies", "gev_margins", "Stan", "circulant.stan"),
     include_paths = here::here("stanfunctions"),
-    force_recompile = force_recompile,
+    force_recompile = recomp,
     quiet = TRUE
   )
 
@@ -75,7 +75,7 @@ fit_circulant <- function(stan_data, inits, force_recompile = FALSE) {
 }
 
 #' @export
-fit_all <- function(n_obs, dim, rho, nu, pars, force_recompile = FALSE) {
+prep_data <- function(n_obs, dim, rho, nu, pars) {
   z <- stdmatern::rmatern_copula(n_obs, dim, rho, nu)
   z_test <- stdmatern::rmatern_copula(n_obs, dim, rho, nu)
   u <- stats::pnorm(z)
@@ -111,9 +111,18 @@ fit_all <- function(n_obs, dim, rho, nu, pars, force_recompile = FALSE) {
     nu = nu
   )
 
-  exact_results <- fit_exact(stan_data, inits, force_recompile)
-  circulant_results <- fit_circulant(stan_data, inits, force_recompile)
-  folded_results <- fit_folded(stan_data, inits, force_recompile)
+  list(stan_data = stan_data, inits = inits)
+}
+
+#' @export
+fit_all <- function(n_obs, dim, rho, nu, pars, recomp = FALSE) {
+  data <- prep_data(n_obs, dim, rho, nu, pars)
+  stan_data <- data$stan_data
+  inits <- data$inits
+
+  exact_results <- fit_exact(stan_data, inits, recomp)
+  circulant_results <- fit_circulant(stan_data, inits, recomp)
+  folded_results <- fit_folded(stan_data, inits, recomp)
 
   dplyr::bind_rows(
     exact = exact_results,
@@ -123,7 +132,7 @@ fit_all <- function(n_obs, dim, rho, nu, pars, force_recompile = FALSE) {
 }
 
 #' @export
-run_iteration <- function(iter, force_recompile = FALSE) {
+run_iteration <- function(iter, recomp = FALSE) {
   n_obs <- sample(10:40, size = 1)
   dim <- sample(5:25, size = 2, replace = TRUE)
   rho <- stats::runif(n = 2, min = 0.05, max = 0.95)
@@ -143,7 +152,7 @@ run_iteration <- function(iter, force_recompile = FALSE) {
     rho,
     nu,
     pars,
-    force_recompile = force_recompile
+    recomp = recomp
   ) |>
     dplyr::left_join(
       dplyr::tibble(

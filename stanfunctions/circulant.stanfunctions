@@ -1,4 +1,16 @@
-matrix create_base_matrix(int dim1, int dim2, real rho1, real rho2) {
+/*
+  Creates a base matrix for the circulant approximation of a Matérn covariance
+  defined as a Kronecker sum of two AR(1) processes approximated with 
+  circulant matrices.
+
+  @param dim1 The first dimension of the grid
+  @param dim2 The second dimension of the grid
+  @param rho1 The correlation parameter for the first dimension
+  @param rho2 The correlation parameter for the second dimension
+
+  @return A matrix representing the base for the circulant approximation
+*/
+matrix make_base_matrix(int dim1, int dim2, real rho1, real rho2) {
   matrix[dim2, dim1] c = rep_matrix(0, dim2, dim1);
   vector[dim1] c1 = rep_vector(0, dim1);
   vector[dim2] c2 = rep_vector(0, dim2);
@@ -24,59 +36,85 @@ matrix create_base_matrix(int dim1, int dim2, real rho1, real rho2) {
   // Set the rest of the first column
   c[2, 1] = c2[2];
   c[dim2, 1] = c2[dim2];
-
   return c;
 }
 
-complex_matrix compute_and_rescale_eigenvalues(matrix c, int nu) {
-  int dim2 = rows(c);
-  int dim1 = cols(c);
-  complex_matrix[dim2, dim1] eigs = fft2(c);
+/*
+  Creates a base matrix and rescales its eigenvalues for the circulant approximation.
+  The eigenvalues are rescaled so that the inverse of the precision matrix is
+  a correlation matrix.
+
+  The function returns the square root of the eigenvalues for use in quadratic forms.
+
+  @param dim1 The first dimension of the grid
+  @param dim2 The second dimension of the grid
+  @param rho1 The correlation parameter for the first dimension
+  @param rho2 The correlation parameter for the second dimension
+  @param nu The smoothness parameter of the Matérn covariance
+
+  @return A complex matrix of square roots of rescaled eigenvalues
+*/
+complex_matrix create_base_matrix_and_rescale_eigenvalues(int dim1, int dim2, real rho1, real rho2, int nu) {
   
-  // Apply nu and compute inverse
-  complex_matrix[dim2, dim1] inv_eigs = rep_matrix(0, dim2, dim1);
-  for (i in 1:dim2) {
-    for (j in 1:dim1) {
-      eigs[i, j] = pow(eigs[i, j], nu + 1);
-      inv_eigs[i, j] = 1.0 / eigs[i, j];
-    }
-  }
+  matrix[dim2, dim1] c = make_base_matrix(dim1, dim2, rho1, rho2);
+
+  // Compute the eigenvalues and marginal standard deviation
+  complex_matrix[dim2, dim1] sqrt_eigs = pow(fft2(c), (nu + 1.0) / 2.0);
+  complex_matrix[dim2, dim1] inv_sqrt_eigs = pow(sqrt_eigs, -1);
+  real msd = get_real(inv_fft2(inv_sqrt_eigs)[1, 1]);
+  sqrt_eigs *= msd;
   
-  // Compute marginal variance
-  real mvar = get_real(inv_fft2(inv_eigs)[1, 1]);
-  
-  // Scale eigenvalues
-  for (i in 1:dim2) {
-    for (j in 1:dim1) {
-      eigs[i, j] = mvar * eigs[i, j];
-    }
-  }
-  
-  return eigs;
+  return sqrt_eigs;
 }
 
-vector matvec_prod(complex_matrix eigs, vector v) {
-  int dim2 = rows(eigs);
-  int dim1 = cols(eigs);
+/*
+  Performs matrix-vector multiplication in the Fourier domain.
+
+  @param sqrt_eigs The square root of the eigenvalues
+  @param v The vector to multiply
+
+  @return The result of the matrix-vector product
+*/
+vector matvec_prod(complex_matrix sqrt_eigs, vector v) {
+  int dim2 = rows(sqrt_eigs);
+  int dim1 = cols(sqrt_eigs);
   complex_matrix[dim2, dim1] v_mat = to_matrix(v, dim2, dim1);
   
   complex_matrix[dim2, dim1] fft_v = fft2(v_mat);
-  complex_matrix[dim2, dim1] prod = eigs .* fft_v;
+  complex_matrix[dim2, dim1] prod = sqrt_eigs .* fft_v;
   complex_matrix[dim2, dim1] result_complex = inv_fft2(prod);
   
   return to_vector(get_real(result_complex));
 }
 
-real matern_circulant_copula_lpdf(vector Z, complex_matrix eigs) {
-  int dim1 = cols(eigs);
-  int dim2 = rows(eigs);
-  vector[dim1 * dim2] Qx = matvec_prod(eigs, Z);
-  return - (dot_product(Z, Qx) - sum(log(get_real(eigs))) - sum(square(Z))) / 2.0;
+/*
+  Computes the log probability density of a Matérn copula that's approximated
+  with a block circulant matrix with circulant blocks.
+
+  @param Z The vector of standard normal variates
+  @param sqrt_eigs The square root of the eigenvalues of the precision matrix
+
+  @return The log probability density
+*/
+real matern_circulant_copula_lpdf(vector Z, complex_matrix sqrt_eigs) {
+  int dim1 = cols(sqrt_eigs);
+  int dim2 = rows(sqrt_eigs);
+  vector[dim1 * dim2] y = matvec_prod(sqrt_eigs, Z);
+  return - (dot_self(y) - sum(log(get_real(sqrt_eigs))) - dot_self(Z)) / 2.0;
 }
 
-real matern_circulant_lpdf(vector X, vector mu, complex_matrix eigs) {
-  int dim1 = cols(eigs);
-  int dim2 = rows(eigs);
-  vector[dim1 * dim2] Qx = matvec_prod(eigs, X);
-  return - (dot_product(X, Qx) - sum(log(get_real(eigs)))) / 8.0;
+/*
+  Computes the log probability density of a Matérn distribution that's approximated
+  with a block circulant matrix with circulant blocks.
+
+  @param X The vector of observations
+  @param sqrt_eigs The square root of the eigenvalues of the precision matrix
+
+  @return The log probability density
+*/
+real matern_circulant_lpdf(vector X, complex_matrix sqrt_eigs) {
+  int dim1 = cols(sqrt_eigs);
+  int dim2 = rows(sqrt_eigs);
+  vector[dim1 * dim2] y = matvec_prod(sqrt_eigs, X);
+  return - (dot_self(y) - sum(log(get_real(sqrt_eigs)))) / 2.0;
 }

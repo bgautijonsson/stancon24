@@ -1,0 +1,10 @@
+/*
+  This function sets the priors for all the different models in the gev_margins case study.
+  It includes priors for the GEV parameters (mu, sigma, xi) and the correlation parameters (rho).
+*/
+real priors(real mu, real sigma, real xi, vector rho) {
+  real out = 0;
+  out += exponential_lpdf(xi | 1);
+  out += beta_lpdf(rho | 1, 1);
+  return out;
+}

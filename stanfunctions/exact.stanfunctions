@@ -1,5 +1,10 @@
 /*
-This function computes the Kronecker product of two vectors a and b.
+  Computes the Kronecker product of two vectors a and b.
+
+  @param a The first vector
+  @param b The second vector
+
+  @return A vector representing the Kronecker product of a and b
 */
 vector kronecker(vector a, vector b) {
   int n_a = rows(a);
@@ -16,26 +21,14 @@ vector kronecker(vector a, vector b) {
 }
 
 /*
-This function generates the precision matrix for an AR1 process with a given correlation parameter rho.
-*/
-matrix ar1_precision(int n, real rho) {
-  matrix[n, n] Q;
-  real scaling = 1.0 / (1.0 - rho * rho);
-  real off_diag = -rho * scaling;
+  Calculates the marginal standard deviations of the matrix Q, defined as the
+  Kronecker sum of Q1 and Q2 with smoothness parameter nu.
 
-  Q = rep_matrix(0, n, n);
-  for (i in 1:n) {
-    Q[i, i] = (i == 1 || i == n) ? scaling : (1.0 + rho * rho) * scaling;
-    if (i > 1) Q[i, i-1] = off_diag;
-    if (i < n) Q[i, i+1] = off_diag;
-  }
-  return Q;
-}
+  @param E1 Tuple containing the eigendecomposition of Q1
+  @param E2 Tuple containing the eigendecomposition of Q2
+  @param nu The smoothness parameter
 
-/*
-This function takes as input the eigendecomposition of two matrices Q1 and Q2 and 
-returns the marginal standard deviations of the matrix Q, defined as the
-kronecker sum of Q1 and Q2 with smoothness parameter nu.
+  @return A vector of marginal standard deviations
 */
 vector marginal_sd(tuple(matrix, vector) E1, tuple(matrix, vector) E2, real nu) {
   int dim1 = cols(E1.1);
@@ -46,18 +39,51 @@ vector marginal_sd(tuple(matrix, vector) E1, tuple(matrix, vector) E2, real nu) 
   matrix[dim2, dim2] V2 = E2.1;
   vector[dim2] A2 = E2.2;
 
-
-vector[dim1 * dim2] marginal_sds = rep_vector(0.0, dim1 * dim2);
-for (i in 1:dim1) {
-  for (j in 1:dim2) {
-    vector[dim1 * dim2] v = kronecker(V1[, i], V2[, j]);
-    real lambda = pow(A1[i] + A2[j], nu + 1);
-    marginal_sds += square(v) / lambda;
+  vector[dim1 * dim2] marginal_sds = rep_vector(0.0, dim1 * dim2);
+  for (i in 1:dim1) {
+    for (j in 1:dim2) {
+      vector[dim1 * dim2] v = kronecker(V1[, i], V2[, j]);
+      real lambda = pow(A1[i] + A2[j], nu + 1);
+      marginal_sds += square(v) / lambda;
+    }
   }
-}
-return sqrt(marginal_sds);
+  return sqrt(marginal_sds);
 }
 
+/*
+  Computes the eigendecomposition of the precision matrix for an AR(1) process.
+
+  @param n The size of the AR(1) process
+  @param rho The correlation parameter
+
+  @return A tuple containing the eigenvectors and eigenvalues of the precision matrix
+*/
+tuple(matrix, vector) ar1_precision_eigen(int n, real rho) {
+  matrix[n, n] Q;
+  real scaling = 1.0 / (1.0 - rho * rho);
+  real off_diag = -rho * scaling;
+
+  Q = rep_matrix(0, n, n);
+  for (i in 1:n) {
+    Q[i, i] = (i == 1 || i == n) ? scaling : (1.0 + rho * rho) * scaling;
+    if (i > 1) Q[i, i-1] = off_diag;
+    if (i < n) Q[i, i+1] = off_diag;
+  }
+  
+  return eigendecompose_sym(Q);
+}
+
+/*
+  Computes the log probability density of a Matérn copula using the connection between 
+  the eigendecomposition of the precision matrix and the smaller AR(1) precision matrices.
+
+  @param Z The matrix of standard normal variates
+  @param E1 Tuple containing the eigendecomposition of Q1
+  @param E2 Tuple containing the eigendecomposition of Q2
+  @param nu The smoothness parameter
+
+  @return The log probability density
+*/
 real matern_copula_exact_lpdf(matrix Z, tuple(matrix, vector) E1, tuple(matrix, vector) E2, int nu) {
   int n_obs = cols(Z);
   int dim1 = cols(E1.1);
@@ -88,6 +114,17 @@ real matern_copula_exact_lpdf(matrix Z, tuple(matrix, vector) E1, tuple(matrix, 
   return -0.5 * (quadform_sum - n_obs * log_det - z_squared);
 }
 
+/*
+  Computes the log probability density of a Matérn distribution using the connection between
+  the eigendecomposition of the precision matrix and the smaller AR(1) precision matrices.
+
+  @param Z The matrix of observations
+  @param E1 Tuple containing the eigendecomposition of Q1
+  @param E2 Tuple containing the eigendecomposition of Q2
+  @param nu The smoothness parameter
+
+  @return The log probability density
+*/
 real matern_exact_lpdf(matrix Z, tuple(matrix, vector) E1, tuple(matrix, vector) E2, int nu) {
   int n_obs = cols(Z);
   int dim1 = cols(E1.1);

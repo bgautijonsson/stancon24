@@ -1,6 +1,8 @@
 functions {
   #include gev.stanfunctions
   #include folded.stanfunctions
+  #include circulant.stanfunctions
+  #include gev_margins.stanfunctions
 }
 
 data {
@@ -25,8 +27,7 @@ parameters {
 }
 
 transformed parameters {
-  matrix[2 * dim2, 2 * dim1] c = create_base_matrix(2 * dim1, 2 * dim2, rho[1], rho[2]);
-  complex_matrix[2 * dim2, 2 * dim1] eigs = compute_and_rescale_eigenvalues(c, nu);
+  complex_matrix[2 * dim2, 2 * dim1] eigs = create_base_matrix_and_rescale_eigenvalues(2 * dim1, 2 * dim2, rho[1], rho[2], nu);
 }
 
 model {
@@ -42,13 +43,11 @@ model {
   // Likelihood
   matrix[D, n_obs] Z = inv_Phi(u);
   for (i in 1:n_obs) {
-    target += matern_folded_copula_lpdf(to_vector(Z[ , i]) | eigs);
+    target += matern_circulant_copula_lpdf(fold_data(Z[ , i], dim1, dim2) | eigs) / 4.0;
   }
 
   // Priors
-  target += beta_lpdf(rho | 1, 1);
-  target += std_normal_lpdf(xi);
-  target += exponential_lpdf(sigma | 1);
+  target += priors(mu, sigma, xi, rho);
 }
 
 generated quantities {
@@ -65,6 +64,6 @@ generated quantities {
   // Likelihood
   matrix[D, n_obs] Z = inv_Phi(u);
   for (i in 1:n_obs) {
-    log_lik += matern_folded_copula_lpdf(to_vector(Z[ , i]) | eigs);
+    log_lik += matern_circulant_copula_lpdf(fold_data(Z[ , i], dim1, dim2) | eigs) / 4.0;
   }
 }

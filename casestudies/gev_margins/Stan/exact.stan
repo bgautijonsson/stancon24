@@ -1,6 +1,7 @@
 functions {
 #include exact.stanfunctions
 #include gev.stanfunctions
+#include gev_margins.stanfunctions
 }
 
 data {
@@ -25,10 +26,8 @@ parameters {
 }
 
 transformed parameters {
-  matrix[dim1, dim1] Q1 = ar1_precision(dim1, rho[1]);
-  matrix[dim2, dim2] Q2 = ar1_precision(dim2, rho[2]);
-  tuple(matrix[dim1, dim1], vector[dim1]) E1 = eigendecompose_sym(Q1);
-  tuple(matrix[dim2, dim2], vector[dim2]) E2 = eigendecompose_sym(Q2);
+  tuple(matrix[dim1, dim1], vector[dim1]) E1 = ar1_precision_eigen(dim1, rho[1]);
+  tuple(matrix[dim2, dim2], vector[dim2]) E2 = ar1_precision_eigen(dim2, rho[2]);
 }
 
 model {
@@ -46,9 +45,7 @@ model {
   target += matern_copula_exact_lpdf(Z | E1, E2, nu);
 
   // Priors
-  target += beta_lpdf(rho | 1, 1);
-  target += std_normal_lpdf(xi);
-  target += exponential_lpdf(sigma | 1);
+  target += priors(mu, sigma, xi, rho);
 }
 
 generated quantities {
