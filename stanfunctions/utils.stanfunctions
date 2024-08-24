@@ -1,0 +1,34 @@
+/*
+This function computes the Kronecker product of two vectors a and b.
+*/
+vector kronecker(vector a, vector b) {
+  int n_a = rows(a);
+  int n_b = rows(b);
+  vector[n_a * n_b] result;
+  
+  for (i in 1:n_a) {
+    for (j in 1:n_b) {
+      result[(i-1)*n_b + j] = a[i] * b[j];
+    }
+  }
+  
+  return result;
+}
+
+/*
+This function generates the precision matrix for an AR1 process with a given correlation parameter rho.
+*/
+matrix ar1_precision(int n, real rho) {
+  matrix[n, n] Q;
+  real scaling = 1.0 / (1.0 - rho * rho);
+  real off_diag = -rho * scaling;
+
+  Q = rep_matrix(0, n, n);
+  for (i in 1:n) {
+    Q[i, i] = (i == 1 || i == n) ? scaling : (1.0 + rho * rho) * scaling;
+    if (i > 1) Q[i, i-1] = off_diag;
+    if (i < n) Q[i, i+1] = off_diag;
+  }
+  return Q;
+}
+
