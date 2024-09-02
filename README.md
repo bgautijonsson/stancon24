@@ -1,9 +1,3 @@
-# StanCon2024 Case Studies
+This directory contains materials related to my presentation at the 2024 StanCon conference. The main focus is on research about scaling Gaussian Markov Random Fields (GMRF) for use in Gaussian Copulas for efficient modeling of spatial dependence at the data level.
 
-This repository contains case studies and applications for StanCon2024, focusing on spatial modeling with Generalized Extreme Value (GEV) distributions.
-
-## Case Studies
-
-1. [GEV Margins](casestudies/gev_margins): Exploring different approaches to modeling spatial dependence in Generalized Extreme Value (GEV) distributions using Stan.
-
-For more details on each case study, please refer to their respective README files.
+The contents of this repository are hosted [as a website here](https://bggj.is/stancon24).

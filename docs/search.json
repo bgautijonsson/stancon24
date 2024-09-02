@@ -1,0 +1,191 @@
+[
+  {
+    "objectID": "presentation/index.html#introduction",
+    "href": "presentation/index.html#introduction",
+    "title": "Copulas in Stan",
+    "section": "Introduction",
+    "text": "Introduction\n\n\n\nUKCP Local Projections on a 5km grid over the UK (1980-2080) [1]\nChallenge: Modeling maximum daily precipitation in yearly blocks\n\n43,920 spatial locations on a 180 x 244 grid\nFour parameters per location as in [2]\n\nLocation, Trend, Scale, Shape\n\n\nTwo aspects of spatial dependence:\n\nGEV parameters (ICAR models)\nData-level dependence (Copulas)"
+  },
+  {
+    "objectID": "presentation/index.html#calculating-multivariate-normal-densities",
+    "href": "presentation/index.html#calculating-multivariate-normal-densities",
+    "title": "Copulas in Stan",
+    "section": "Calculating Multivariate Normal Densities",
+    "text": "Calculating Multivariate Normal Densities\n\n\\[\n\\log f(\\mathbf{x}) \\propto \\frac{1}{2}\\left(\\log |\\mathbf{Q}| - \\mathbf{x}^T\\mathbf{Q}\\mathbf{x}\\right)\n\\]\nComputational challenges\n\nLog Determinant: \\(\\log |\\mathbf{Q}|\\)\n\nConstant for a given precision matrix\n\nQuadratic Form: \\(\\mathbf{x}^T\\mathbf{Q}\\mathbf{x}\\)\n\nNeeds calculation for each density evaluation\n\n\n\nSpatial Model Considerations\n\nSome models (e.g., ICAR) avoid log determinant calculation\nEfficient computation crucial for large-scale applications\nFast algorithms when \\(\\mathbf{Q}\\) is sparse [3–4]"
+  },
+  {
+    "objectID": "presentation/index.html#spatial-models",
+    "href": "presentation/index.html#spatial-models",
+    "title": "Copulas in Stan",
+    "section": "Spatial Models",
+    "text": "Spatial Models\n\nConditional Autoregression (CAR) [5]\n\n\n\n\\(\\mathbf{D}\\) is a diagonal matrix with \\(D_{ii} = n_i\\), the number of neighbours of \\(i\\)\n\\(\\mathbf{A}\\) is the adjacency matrix with \\(A_{ij} = A_{ji} = 1\\) if \\(i \\sim j\\)\n\n\n\\[\n\\begin{aligned}\n\\mathbf{x} &\\sim N(\\mathbf{0}, \\tau \\mathbf{Q}) \\\\\n\\mathbf{Q} &= \\mathbf{D}\\left(\\mathbf{I} - \\alpha \\mathbf{A} \\right)\n\\end{aligned}\n\\]\n\n\nIntrinsic Conditional Autoregression (ICAR) [6]\n\n\n\n\\(\\alpha = 1\\), so \\(\\mathbf Q\\) is singular, but constant\nDon’t have to calculate \\(\\log |\\mathbf{Q}|\\)\n\n\n\\[\n\\begin{aligned}\n\\mathbf{x} &\\sim N(\\mathbf{0}, \\tau \\mathbf{Q}) \\\\\n\\mathbf{Q} &= \\mathbf{D} - \\mathbf{A}\n\\end{aligned}\n\\]\n\n\n\n\nBYM (Besag-York-Mollié) Model [6]\n\n\\(\\mathbf{u}\\) is the structured spatial component (Besag model)\n\\(\\mathbf{v}\\) is the unstructured component (i.i.d. normal)\n\n\n\\[\n\\begin{aligned}\n\\mathbf{x} &= \\mathbf{u} + \\mathbf{v} \\\\\n\\mathbf{u} &\\sim \\mathrm{ICAR}(\\tau_u) \\\\\n\\mathbf{v} &\\sim N(\\mathbf{0}, \\tau_v^{-1})\n\\end{aligned}\n\\]\n\n\n\n\nBYM2 Model [7–  8]\n\n\\(\\rho\\) models how much of variance is spatial\n\\(s\\) is a scaling factor chosen to make \\(\\mathrm{Var}(\\mathbf u_i) \\approx 1\\)\n\n\n\\[\n\\begin{aligned}\n\\mathbf{x} &= \\left(\\left(\\sqrt{\\rho/s}\\right)\\mathbf{u} + \\left(\\sqrt{1 - \\rho}\\right) \\mathbf{v} \\right)\\sigma \\\\\n\\mathbf{u} &\\sim \\mathrm{ICAR}(1) \\\\\n\\mathbf{v} &\\sim N(\\mathbf{0}, n)\n\\end{aligned}\n\\]"
+  },
+  {
+    "objectID": "presentation/index.html#spatial-modeling-on-parameter-level",
+    "href": "presentation/index.html#spatial-modeling-on-parameter-level",
+    "title": "Copulas in Stan",
+    "section": "Spatial Modeling on Parameter-level",
+    "text": "Spatial Modeling on Parameter-level\n\n\n\n\\(\\mu\\): location parameter\n\n\\(\\mu = \\mu_0 \\left(1 + \\Delta \\left(t - t_0\\right)\\right)\\)\n\n\\(\\sigma\\): scale parameter\n\\(\\xi\\): shape parameter \\[\n\\begin{aligned}\n\\log(\\mu_0) = \\psi &\\sim \\mathrm{BYM2}(\\mu_\\psi, \\rho_\\psi, \\sigma_\\psi) \\\\\n\\log(\\mu_0) - \\log(\\sigma) = \\tau &\\sim \\mathrm{BYM2}(\\mu_\\tau, \\rho_\\tau, \\sigma_\\tau) \\\\\nf_\\xi(\\xi) = \\phi &\\sim \\mathrm{BYM2}(\\mu_\\phi, \\rho_\\phi, \\sigma_\\phi) \\\\\nf_\\Delta(\\Delta) = \\gamma &\\sim \\mathrm{BYM2}(\\mu_\\gamma, \\rho_\\gamma, \\sigma_\\gamma)\n\\end{aligned}\n\\]"
+  },
+  {
+    "objectID": "presentation/index.html#from-parameter-level-to-data-level-dependence",
+    "href": "presentation/index.html#from-parameter-level-to-data-level-dependence",
+    "title": "Copulas in Stan",
+    "section": "From Parameter-level to Data-level Dependence",
+    "text": "From Parameter-level to Data-level Dependence\n\n\nParameter-level Dependence\n\nAssumes conditional independence\nBiased joint probability estimates\nUnderestimates parameter variance\n\n\nCopula\n\nImproves joint probabilities\nEnhances spatial risk assessment\nBetter variance estimates\n\n\n\nSklar’s Theorem: For any multivariate distribution \\(H\\), there exists a unique copula \\(C\\) such that:\n\\[\nH(\\mathbf x) = C(F_1(x_1), \\dots, F_d(x_d))\n\\]\nwhere \\(F_i\\) are marginal distributions. We can also write this as a density\n\\[\nh(x) = c(F_1(x_1), \\dots, F_d(x_d)) \\prod_{i=1}^d f_i(x_i)\n\\]"
+  },
+  {
+    "objectID": "presentation/index.html#our-approach-matérn-like-gaussian-copula",
+    "href": "presentation/index.html#our-approach-matérn-like-gaussian-copula",
+    "title": "Copulas in Stan",
+    "section": "Our Approach: Matérn-like Gaussian Copula",
+    "text": "Our Approach: Matérn-like Gaussian Copula\n\n\\[\n\\begin{gathered}\n\\log h(\\mathbf x) = \\log c\\left(F_1(x_1), \\dots, F_d(x_d)\\right) + \\sum_{i=1}^d \\log f_i(x_i)\n\\end{gathered}\n\\]\n\n\nMarginal CDFs\n\n\n\\(F_i(x_i)\\) is \\(\\mathrm{GEV}(\\mu_i, \\sigma_i, \\xi_i)\\)\nCan model parameter dependence with BYM2\n\n\n\\[\n\\begin{aligned}\n\\log h(\\mathbf x) &= \\log c(u_1, \\dots, u_d) \\\\\n&+ \\sum_{i=1}^d \\log f_{\\mathrm{GEV}}(x_i \\vert \\mu_i, \\sigma_i, \\xi_i) \\\\\nu_i &= F_{\\mathrm{GEV}}(x_i \\vert \\mu_i, \\sigma_i, \\xi_i)\n\\end{aligned}\n\\]\n\n\n\nGaussian Copula\n\n\nMatérn-like precision matrix \\(\\mathbf{Q}\\) [9]\nScaled so \\(\\boldsymbol{\\Sigma} = \\mathbf{Q}^{-1}\\) is correlation matrix\nIf \\(\\mathbf{Q} = \\mathbf{I}\\) simplifies to independent margins\nHow to generate, scale and compute with \\(\\mathbf{Q}\\) quickly (for MCMC)?\n\n\n\\[\n\\begin{aligned}\n\\log c(\\mathbf u) &\\propto \\frac{1}{2}\\left(\\log |\\mathbf{Q}| - \\mathbf{z}^T\\mathbf{Q}\\mathbf{z} + \\mathbf{z}^T\\mathbf{z}\\right) \\\\\n\\mathbf{z} &= \\Phi^{-1}(\\mathbf u)\n\\end{aligned}\n\\]"
+  },
+  {
+    "objectID": "presentation/index.html#the-precision-matrix",
+    "href": "presentation/index.html#the-precision-matrix",
+    "title": "Copulas in Stan",
+    "section": "The Precision Matrix",
+    "text": "The Precision Matrix\n\n\\(\\mathbf Q\\) defined as Kronecker sum of two AR(1) precision matrices, similar to [9]\n\\[\n\\mathbf{Q} = \\left( \\mathbf{Q}_{\\rho_1} \\otimes \\mathbf{I_{n_2}} + \\mathbf{I_{n_1}} \\otimes \\mathbf{Q}_{\\rho_2} \\right)^{\\nu + 1}, \\quad \\nu \\in \\{0, 1, 2\\}\n\\]\n\n\n\\[\n\\mathbf{Q}_{\\rho_{1}} = \\frac{1}{1-\\rho_{1}^2}\n\\begin{bmatrix}\n1 & -\\rho_{1} & 0 & \\cdots & 0 \\\\\n-\\rho_{1} & 1+\\rho_{1}^2 & -\\rho_{1} & \\cdots & 0 \\\\\n0 & -\\rho_{1} & 1+\\rho_{1}^2 & \\cdots & 0 \\\\\n\\vdots & \\vdots & \\vdots & \\ddots & \\vdots \\\\\n0 & 0 & 0 & \\cdots & 1\n\\end{bmatrix}\n\\]\n\n\\[\n\\mathbf{Q}_{\\rho_{2}} = \\frac{1}{1-\\rho_{2}^2}\n\\begin{bmatrix}\n1 & -\\rho_{2} & 0 & \\cdots & 0 \\\\\n-\\rho_{2} & 1+\\rho_{2}^2 & -\\rho_{2} & \\cdots & 0 \\\\\n0 & -\\rho_{2} & 1+\\rho_{2}^2 & \\cdots & 0 \\\\\n\\vdots & \\vdots & \\vdots & \\ddots & \\vdots \\\\\n0 & 0 & 0 & \\cdots & 1\n\\end{bmatrix}\n\\]\n\\[\n\\mathbf Q = \\begin{bmatrix}\n\\frac{1}{(1-\\rho_1^2)}\\mathbf{I_{n_2}} + \\mathbf{Q_{\\rho_2}} & \\frac{-\\rho_1}{(1-\\rho_1^2)}\\mathbf{I_{n_2}} & \\dots & \\cdots & \\dots \\\\\n\\frac{-\\rho_1}{(1-\\rho_1^2)}\\mathbf{I_{n_2}} & \\frac{(1+\\rho_1^2)}{(1-\\rho_1^2)}\\mathbf{I_{n_2}} + \\mathbf{Q_{\\rho_2}} & \\frac{-\\rho_1}{(1-\\rho_1^2)} \\mathbf{I_{n_2}} & \\cdots & \\vdots  \\\\\n\\vdots & \\ddots & \\ddots & \\ddots & \\vdots \\\\\n\\dots & \\dots & \\cdots & \\frac{-\\rho_1}{(1-\\rho_1^2)} \\mathbf{I_{n_2}} & \\frac{1}{(1-\\rho_1^2)}\\mathbf{I_{n_2}} + \\mathbf{Q_{\\rho_2}}\n\\end{bmatrix}^{\\nu + 1}\n\\]"
+  },
+  {
+    "objectID": "presentation/index.html#eigendecomposition",
+    "href": "presentation/index.html#eigendecomposition",
+    "title": "Copulas in Stan",
+    "section": "Eigendecomposition",
+    "text": "Eigendecomposition\n\nBecause of how \\(\\mathbf{Q}\\) is defined [10], we know that\\[\n\\begin{aligned}\n\\mathbf{Q} &= \\mathbf{V}\\boldsymbol{\\Lambda}\\mathbf{V} \\\\\n&= (\\mathbf{V_{\\rho_1}} \\otimes \\mathbf{V_{\\rho_2}})(\\boldsymbol \\Lambda_{\\rho_1} \\otimes \\mathbf{I} + \\mathbf{I} \\otimes \\boldsymbol \\Lambda_{\\rho_2})^{\\nu + 1}(\\mathbf{V_{\\rho_1}} \\otimes \\mathbf{V_{\\rho_2}})^T\n\\end{aligned}\n\\]where\\[\n\\begin{aligned}\n\\mathbf{Q}_{\\rho_1} = \\mathbf{V_{\\rho_1}}\\boldsymbol \\Lambda_{\\rho_1}\\mathbf{V_{\\rho_1}}^T \\qquad \\& \\qquad\n\\mathbf{Q}_{\\rho_2} = \\mathbf{V_{\\rho_2}}\\boldsymbol \\Lambda_{\\rho_2}\\mathbf{V_{\\rho_2}}^T\n\\end{aligned}\n\\]Spectral decomposition defined by value/vector pairs of smaller matrices\n\\[\n\\left\\{\\lambda_{\\rho_1}\\right\\}_i + \\left\\{\\lambda_{\\rho_2}\\right\\}_j\n\\]\n\n\\[\n\\left\\{\\mathbf{v}_{\\rho_1}\\right\\}_i \\otimes \\left\\{\\mathbf{v}_{\\rho_2}\\right\\}_j\n\\]\n\nProblem: \\(\\boldsymbol \\Sigma_{ii} = \\left(\\mathbf Q^{-1} \\right)_{ii} \\neq  1\\)\nSolution: \\(\\mathbf{\\widetilde  Q} = \\mathbf{D}\\mathbf{Q}\\mathbf{D}\\), where \\(\\mathbf D_{ii} = \\sqrt{\\boldsymbol \\Sigma_{ii}}\\)"
+  },
+  {
+    "objectID": "presentation/index.html#marginal-standard-deviations",
+    "href": "presentation/index.html#marginal-standard-deviations",
+    "title": "Copulas in Stan",
+    "section": "Marginal Standard Deviations",
+    "text": "Marginal Standard Deviations\n\n\\[\n\\boldsymbol \\Sigma = \\mathbf Q^{-1} = (\\mathbf{V}\\boldsymbol\\Lambda\\mathbf{V}^T)^{-1} = \\mathbf{V}\\boldsymbol \\Lambda^{-1}\\mathbf{V}\n\\]\nWe know that if \\(A = BC\\) then \\(A_{ii} = B_{i, .} C_{., i}\\), so\n\\[\n\\boldsymbol \\Sigma_{ii} = \\sum_{k=1}^{n} v_{ik} \\frac{1}{\\lambda_k} (v^T)_{ki} = \\sum_{k=1}^{n} v_{ik} \\frac{1}{\\lambda_k} v_{ik} = \\sum_{k=1}^{n} v_{ik}^2 \\frac{1}{\\lambda_k}\n\\]\nCompute vector \\(\\boldsymbol \\sigma^2\\) containing all marginal variances\n\\[\n\\boldsymbol \\sigma^2 = \\sum_{i = 1}^{n_1} \\sum_{j=1}^{n_2} \\frac{\\left(\\left\\{\\mathbf{v}_{\\rho_1}\\right\\}_i \\otimes \\left\\{\\mathbf{v}_{\\rho_2}\\right\\}_j\\right)^{2}}{\\quad\\left(\\left\\{\\lambda_{\\rho_1}\\right\\}_i + \\left\\{\\lambda_{\\rho_2}\\right\\}_j\\right)^{\\nu+1}}\n\\]"
+  },
+  {
+    "objectID": "presentation/index.html#marginal-standard-deviations-1",
+    "href": "presentation/index.html#marginal-standard-deviations-1",
+    "title": "Copulas in Stan",
+    "section": "Marginal Standard Deviations",
+    "text": "Marginal Standard Deviations\n\n\n\ndim1 &lt;- 50; dim2 &lt;- 50\nrho1 &lt;- 0.5; rho2 &lt;- 0.3\nnu &lt;- 2\n\nQ1 &lt;- make_AR_prec_matrix(dim1, rho1)\nQ2 &lt;- make_AR_prec_matrix(dim2, rho2)\n\nI1 &lt;- Matrix::Diagonal(dim1)\nI2 &lt;- Matrix::Diagonal(dim2)\n\nQ &lt;- temp &lt;- kronecker(Q1, I2) + kronecker(I1, Q2)\nfor (i in seq_len(nu)) Q &lt;- Q %*% temp\n\n\n\nmsd &lt;- function(Q1, Q2) {\n\n  E1 &lt;- eigen(Q1)\n  E2 &lt;- eigen(Q2)\n\n  marginal_sd_eigen(\n    E1$values, E1$vectors, dim1,\n    E2$values, E2$vectors, dim2,\n    nu\n  ) |&gt; \n  sort()\n}\n\n\n\n\nbench::mark(\n  \"solve\" = solve(Q) |&gt; diag() |&gt; sqrt() |&gt; sort(),\n  \"inla.qinv\" = inla.qinv(Q) |&gt; diag() |&gt; sqrt() |&gt; sort(),\n  \"marginal_sd_eigen\" = msd(Q1, Q2),\n  iterations = 10,\n  filter_gc = FALSE \n)\n\n# A tibble: 3 × 6\n  expression             min   median `itr/sec` mem_alloc `gc/sec`\n  &lt;bch:expr&gt;        &lt;bch:tm&gt; &lt;bch:tm&gt;     &lt;dbl&gt; &lt;bch:byt&gt;    &lt;dbl&gt;\n1 solve                1.27s     1.3s     0.755   78.17MB    0.755\n2 inla.qinv         378.61ms  395.8ms     2.49     4.35MB    0    \n3 marginal_sd_eigen   1.36ms   1.54ms   574.     649.35KB    0"
+  },
+  {
+    "objectID": "presentation/index.html#calculating-the-non-copula-density",
+    "href": "presentation/index.html#calculating-the-non-copula-density",
+    "title": "Copulas in Stan",
+    "section": "Calculating the (non-copula) density",
+    "text": "Calculating the (non-copula) density\n\nThe Gaussian log pdf is \\[\n\\log f(\\mathbf{u} \\vert \\mathbf{Q}) \\propto \\frac{1}{2}\\left(\\log|\\mathbf{Q}| - \\mathbf{z}^T\\mathbf{Q}\\mathbf{z}\\right)\n\\]\nWithout scaling of \\(\\mathbf Q\\) we get\n\\[\n\\log|\\mathbf{Q}| = \\sum_{k=1}^{n_1n_2}\\log\\lambda_k = \\sum_{i=1}^{n_1}\\sum_{j=2}^{n_2} \\log\\left[\\left(\\left\\{\\lambda_{\\rho_1}\\right\\}_i + \\left\\{\\lambda_{\\rho_2}\\right\\}_j\\right)^{\\nu + 1}\\right]\n\\]\n\\[\n\\mathbf{z}^T\\mathbf{Q}\\mathbf{z} = \\sum_{k=1}^{n_1n_2}\\lambda_k \\left(v_k^T\\mathbf z\\right)^2 =\n\\sum_{i=1}^{n_1}\\sum_{j=2}^{n_2}\n\\left(\\left\\{\\lambda_{\\rho_1}\\right\\}_i + \\left\\{\\lambda_{\\rho_2}\\right\\}_j\\right)\n\\left[\\left(\\left\\{\\mathbf{v}_{\\rho_1}\\right\\}_i \\otimes \\left\\{\\mathbf{v}_{\\rho_2}\\right\\}_j\\right)^T\\mathbf z\\right]^2\n\\]"
+  },
+  {
+    "objectID": "presentation/index.html#calculating-the-copula-density",
+    "href": "presentation/index.html#calculating-the-copula-density",
+    "title": "Copulas in Stan",
+    "section": "Calculating the copula density",
+    "text": "Calculating the copula density\n\nLet \\(\\mathbf v = \\left\\{\\mathbf{v}_{\\rho_1}\\right\\}_i \\otimes \\left\\{\\mathbf{v}_{\\rho_2}\\right\\}_j\\) and \\(\\lambda = \\left(\\left\\{\\lambda_{\\rho_1}\\right\\}_i + \\left\\{\\lambda_{\\rho_2}\\right\\}_j\\right)^{\\nu + 1}\\). Normalise \\(\\mathbf v\\) and \\(\\lambda\\) with\n\\[\n\\begin{gathered}\n\\widetilde{\\mathbf{v}} = \\frac{\\sigma \\odot \\mathbf{v}}{\\vert\\vert \\sigma \\odot\\mathbf{v}\\vert\\vert_2}, \\qquad\n\\widetilde{\\lambda} = \\vert\\vert \\sigma \\odot\\mathbf{v}\\vert\\vert_2^2 \\cdot \\lambda\n\\end{gathered}\n\\]\nThen \\(\\widetilde{\\mathbf{v}}\\) and \\(\\widetilde{\\lambda}\\) are an eigenvector/value pair of the scaled precision matrix \\(\\mathbf{\\widetilde{Q}}\\). Iterate over \\(i\\) and \\(j\\) to calculate\n\\[\n\\log c(\\mathbf{u} \\vert \\mathbf{\\widetilde{Q}}) = \\frac{1}{2}\\log|\\mathbf{\\widetilde Q}| - \\frac{1}{2}\\mathbf{z}^T\\mathbf{\\widetilde Q}\\mathbf{z} + \\frac{1}{2}\\mathbf{z}^T\\mathbf{z}\n\\]"
+  },
+  {
+    "objectID": "presentation/index.html#folded-circulant-approximation",
+    "href": "presentation/index.html#folded-circulant-approximation",
+    "title": "Copulas in Stan",
+    "section": "Folded Circulant Approximation",
+    "text": "Folded Circulant Approximation\n\n\n\nAR(1) precision\nThe exact form of \\(Q_{\\rho}\\), the precision matrix of a one-dimensional AR(1) process with correlation \\(\\rho\\)\n\n\\[\n\\mathbf{Q}_\\rho = \\frac{1}{1-\\rho^2}\n\\begin{bmatrix}\n1 & -\\rho & 0 & \\cdots & 0 \\\\\n-\\rho & 1+\\rho^2 & -\\rho & \\cdots & 0 \\\\\n0 & -\\rho & 1+\\rho^2 & \\cdots & 0 \\\\\n\\vdots & \\vdots & \\vdots & \\ddots & \\vdots \\\\\n0 & 0 & 0 & \\cdots & 1\n\\end{bmatrix}\n\\]\n\n\n\n\nCirculant Approximation\nThis approximation treats the first and last observations as neighbors, effectively wrapping the data around a circle. Very fast computation using FFT [4]\n\n\\[\n\\mathbf{Q}_\\rho^{(circ)} = \\frac{1}{1-\\rho^2}\n\\begin{bmatrix}\n1+\\rho^2 & -\\rho & 0 & \\cdots & 0 & -\\rho \\\\\n-\\rho & 1+\\rho^2 & -\\rho & \\cdots & 0 & 0 \\\\\n0 & -\\rho & 1+\\rho^2 & \\cdots & 0 & 0 \\\\\n\\vdots & \\vdots & \\vdots & \\ddots & \\vdots & \\vdots \\\\\n-\\rho & 0 & 0 & \\cdots & -\\rho & 1+\\rho^2\n\\end{bmatrix}\n\\]\n\n\n\n\nFolded Circulant Approximation [11–12]\nWe double the data by reflecting it, giving us the data \\(x_1,  \\dots, x_n, x_n, \\dots, x_1\\). We then model this doubled data with a \\(2n \\times 2n\\) circulant matrix. Get fast computation like in circulant case, but better boundary conditions. Quadratic form written out as an \\(n \\times n\\) matrix takes the form on the right.\n\n\\[\n\\mathbf{Q}_\\rho^{(fold)} = \\frac{1}{1-\\rho^2}\n\\begin{bmatrix}\n1-\\rho+\\rho^2 & -\\rho & 0 & \\cdots & 0 & 0 \\\\\n-\\rho & 1+\\rho^2 & -\\rho & \\cdots & 0 & 0 \\\\\n0 & -\\rho & 1+\\rho^2 & \\cdots & 0 & 0 \\\\\n\\vdots & \\vdots & \\vdots & \\ddots & \\vdots & \\vdots \\\\\n0 & 0 & 0 & \\cdots & -\\rho & 1-\\rho+\\rho^2\n\\end{bmatrix}\n\\]"
+  },
+  {
+    "objectID": "presentation/index.html#benchmark-density-computations",
+    "href": "presentation/index.html#benchmark-density-computations",
+    "title": "Copulas in Stan",
+    "section": "Benchmark: Density Computations",
+    "text": "Benchmark: Density Computations\n\n\n\n\n\n\nBenchmarking how long it takes to evaluate the density of a Mátern(\\(\\nu\\))-like field with correlation parameter \\(\\rho\\), either unscaled or scaled to have unit marginal variance\n\n\n\nUnscaled\nScaled\n\n\nGrid\nCholesky\nEigen\nEigen\nCirculant\nFolded\n\n\nTime\nRelative\nTime\nRelative\nTime\nRelative\n\n\n\n\n20x20\n312.56µs\n155.88µs\n49.9%\n235.59µs\n36.2µs\n15.4%\n115.09µs\n48.9%\n\n\n40x40\n1.77ms\n543.76µs\n30.7%\n1.65ms\n115.8µs\n7.0%\n300.9µs\n18.3%\n\n\n60x60\n6.33ms\n1.8ms\n28.5%\n7.1ms\n188.48µs\n2.7%\n609.71µs\n8.6%\n\n\n80x80\n17.98ms\n5.17ms\n28.8%\n21.96ms\n338.15µs\n1.5%\n1.26ms\n5.7%\n\n\n100x100\n38.58ms\n11.48ms\n29.8%\n48.44ms\n445.14µs\n0.9%\n2.37ms\n4.9%\n\n\n120x120\n81.1ms\n22.74ms\n28.0%\n88.45ms\n719.55µs\n0.8%\n2.82ms\n3.2%\n\n\n140x140\n145.26ms\n32.55ms\n22.4%\n168.38ms\n965.71µs\n0.6%\n5.39ms\n3.2%\n\n\n160x160\n233.03ms\n54.51ms\n23.4%\n260.7ms\n1.27ms\n0.5%\n5.33ms\n2.0%\n\n\n180x180\n359.21ms\n97.4ms\n27.1%\n482.93ms\n1.61ms\n0.3%\n10.22ms\n2.1%\n\n\n200x200\n567.01ms\n147.51ms\n26.0%\n676.53ms\n1.84ms\n0.3%\n8.62ms\n1.3%\n\n\n220x220\n791.13ms\n206.13ms\n26.1%\n994.11ms\n2.59ms\n0.3%\n13.55ms\n1.4%\n\n\n240x240\n1.07s\n287ms\n26.8%\n1.34s\n2.82ms\n0.2%\n14.77ms\n1.1%"
+  },
+  {
+    "objectID": "presentation/index.html#benchmark-maximum-likelihood",
+    "href": "presentation/index.html#benchmark-maximum-likelihood",
+    "title": "Copulas in Stan",
+    "section": "Benchmark: Maximum Likelihood",
+    "text": "Benchmark: Maximum Likelihood\n\n\n\n\n \n\n\n\n\n\n\nBenchmarking speed of ML computations\n\n\nGrid Size\nExact\nFolded\n\n\nTime\nSpeed-Up\n\n\n\n\n10 x 10\n6.86ms\n2.42ms\n2.84x\n\n\n20 x 20\n15.42ms\n7.64ms\n2.02x\n\n\n30 x 30\n35.02ms\n12.13ms\n2.89x\n\n\n40 x 40\n75.03ms\n19.43ms\n3.86x\n\n\n50 x 50\n150.24ms\n28.68ms\n5.24x\n\n\n60 x 60\n284.12ms\n40.26ms\n7.06x\n\n\n70 x 70\n485.3ms\n54.8ms\n8.86x\n\n\n80 x 80\n754.37ms\n74.66ms\n10.1x"
+  },
+  {
+    "objectID": "presentation/index.html#approximating-the-correlation-matrix",
+    "href": "presentation/index.html#approximating-the-correlation-matrix",
+    "title": "Copulas in Stan",
+    "section": "Approximating the Correlation Matrix",
+    "text": "Approximating the Correlation Matrix"
+  },
+  {
+    "objectID": "presentation/index.html#data-generation",
+    "href": "presentation/index.html#data-generation",
+    "title": "Copulas in Stan",
+    "section": "Data Generation",
+    "text": "Data Generation\n\n\ntictoc::tic()\nX &lt;- rmatern_copula_folded_full(n = 100, dim1 = 400, dim2 = 180, rho1 = 0.8, rho2 = 0.9, nu = 2)\ntictoc::toc()\n\n1.334 sec elapsed\n\n\n\nplot_matern(X[, 1], 400, 180)\n\n\n\n\n\n\n\n\n\nplot_matern(X[, 2], 400, 180)\n\n\n\n\n\n\n\n\n\n\napply(X, 1, var) |&gt; hist()\n\n\n\n\n\n\n\n\n\napply(X, 1, mean) |&gt; hist()"
+  },
+  {
+    "objectID": "presentation/index.html#conclusion-and-future-work",
+    "href": "presentation/index.html#conclusion-and-future-work",
+    "title": "Copulas in Stan",
+    "section": "Conclusion and Future Work",
+    "text": "Conclusion and Future Work\n\n\nKey Results\n\nDeveloped Matérn-like Gaussian copula for large spatial fields\nFolded circulant approximation to the density\nAchieved fast density computations\nViable for MCMC samplers\n\n\nFuture Work\n\nImplement t-copulas\nApply to other environmental and climate datasets\nFinish drafting paper\nR package\n\nPhD Committee\nMy thanks to my advisor and committee\n\nBirgir Hrafnkelsson (PI)\nRaphaël Huser\nStefan Siegert"
+  },
+  {
+    "objectID": "casestudy/index.html",
+    "href": "casestudy/index.html",
+    "title": "Case Study #1",
+    "section": "",
+    "text": "Code\nlibrary(stdmatern)\nlibrary(cmdstanr)\nlibrary(tidyverse)\nlibrary(evd)\nlibrary(patchwork)\n\ntheme_set(bggjphd::theme_bggj())\nregister_knitr_engine(override = TRUE)"
+  },
+  {
+    "objectID": "casestudy/index.html#generalized-extreme-value-distribution",
+    "href": "casestudy/index.html#generalized-extreme-value-distribution",
+    "title": "Case Study #1",
+    "section": "Generalized Extreme Value Distribution",
+    "text": "Generalized Extreme Value Distribution"
+  },
+  {
+    "objectID": "casestudy/index.html#gaussian-markov-random-fields",
+    "href": "casestudy/index.html#gaussian-markov-random-fields",
+    "title": "Case Study #1",
+    "section": "Gaussian Markov Random Fields",
+    "text": "Gaussian Markov Random Fields"
+  },
+  {
+    "objectID": "casestudy/index.html#copulas",
+    "href": "casestudy/index.html#copulas",
+    "title": "Case Study #1",
+    "section": "Copulas",
+    "text": "Copulas\n\nGaussian Copula\n\n\nGMRF Copula"
+  },
+  {
+    "objectID": "casestudy/index.html#sampling-from-the-copula",
+    "href": "casestudy/index.html#sampling-from-the-copula",
+    "title": "Case Study #1",
+    "section": "Sampling from the copula",
+    "text": "Sampling from the copula\n\n\nCode\ndim &lt;- c(30, 20)\nrho &lt;- c(0.7, 0.9)\nnu &lt;- 2\nn_obs &lt;- 10\nmu &lt;- 6\nsigma &lt;- 2\nxi &lt;- 0.1\n\nZ &lt;- rmatern_copula(n_obs, dim, rho, nu)\nU &lt;- pnorm(Z)\nY &lt;- qgev(U, loc = mu, scale = sigma, shape = xi)\n\n\n\n\nCode\ntibble(\n  Z = Z[, 1],\n  U = U[, 1],\n  Y = Y[, 1]\n) |&gt; \n  mutate(\n    x = rep(seq_len(dim[1]), each = dim[2]),\n    y = rep(seq_len(dim[2]), times = dim[1])\n  ) |&gt; \n  pivot_longer(c(Z, U, Y)) |&gt; \n  mutate(\n    name = fct_relevel(name, \"Z\", \"U\", \"Y\"),\n    name2 = fct_recode(\n      name,\n      \"Gaussian\" = \"Z\",\n      \"Uniform\" = \"U\",\n      \"GEV\" = \"Y\"\n    )\n  ) |&gt; \n  group_by(name) |&gt; \n  group_map(\n    \\(data, ...) {\n      data |&gt; \n        ggplot(aes(x, y, fill = value)) +\n        geom_raster() +\n        scale_fill_viridis_c() +\n        coord_cartesian(expand = FALSE) +\n        theme(\n          legend.position = \"none\"\n        ) +\n        labs(\n          x = NULL,\n          y = NULL,\n          subtitle = unique(data$name2)\n        )\n    }\n  ) |&gt; \n  wrap_plots(ncol = 3) +\n  plot_annotation(\n    title = \"Sampling from the Gaussian Copula\",\n    subtitle = \"Going from Gaussian to Uniform to GEV\"\n  )"
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Brynjólfur Gauti Guðrúnar Jónsson",
+    "section": "",
+    "text": "This website contains materials for my StanCon24 talk on applying Gaussian Markov Random Field (GMRF) copulas to model data-level spatial dependence on the data level.\nIf you see me, please feel free to come and chat about statistics, music, books or anything at all!\n\n\n\n\nPresentation Slides\nGitHub Repository\nManuscript\n\n\n\n\nBrynjólfur Gauti Guðrúnar Jónsson\nPhD Student in Statistics\nUniversity of Iceland\nEmail: brynjolfur@hi.is"
+  },
+  {
+    "objectID": "index.html#overview",
+    "href": "index.html#overview",
+    "title": "Brynjólfur Gauti Guðrúnar Jónsson",
+    "section": "",
+    "text": "This website contains materials for my StanCon24 talk on applying Gaussian Markov Random Field (GMRF) copulas to model data-level spatial dependence on the data level.\nIf you see me, please feel free to come and chat about statistics, music, books or anything at all!"
+  },
+  {
+    "objectID": "index.html#resources",
+    "href": "index.html#resources",
+    "title": "Brynjólfur Gauti Guðrúnar Jónsson",
+    "section": "",
+    "text": "Presentation Slides\nGitHub Repository\nManuscript"
+  },
+  {
+    "objectID": "index.html#contact",
+    "href": "index.html#contact",
+    "title": "Brynjólfur Gauti Guðrúnar Jónsson",
+    "section": "",
+    "text": "Brynjólfur Gauti Guðrúnar Jónsson\nPhD Student in Statistics\nUniversity of Iceland\nEmail: brynjolfur@hi.is"
+  }
+]

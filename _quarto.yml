@@ -1,0 +1,27 @@
+project:
+  type: website
+  output-dir: docs
+  resources: 
+    - "presentation/*.png"
+
+website:
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+      - href: presentation/index.qmd
+        text: Presentation Slides
+      - href: https://bggj.is/materneigenpaper
+        text: Paper
+      - href: https://github.com/bgautijonsson/stdmatern
+        text: R Package
+    right: 
+      - href: https://github.com/bgautijonsson/stancon24
+        icon: github
+format:
+  html:
+    theme: [theme.scss, cosmo]
+    toc: true
+
+execute:
+  freeze: true

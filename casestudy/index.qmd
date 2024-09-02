@@ -1,0 +1,149 @@
+---
+title: "Case Study #1"
+subtitle: "Generalized Extreme Value Margins and a Matérn Copula"
+author: "Brynjólfur Gauti Guðrúnar Jónsson"
+date: last-modified
+format:
+  html:
+    toc: false
+    toc-depth: 3
+    number-sections: false
+    highlight-style: github
+    code-fold: show
+bibliography: references.bib
+execute:
+  echo: true
+  warning: false
+---
+
+```{r setup}
+#| code-fold: true
+library(stdmatern)
+library(cmdstanr)
+library(tidyverse)
+library(evd)
+library(patchwork)
+
+theme_set(bggjphd::theme_bggj())
+register_knitr_engine(override = TRUE)
+```
+
+# Introduction
+
+## Generalized Extreme Value Distribution
+
+## Gaussian Markov Random Fields
+
+## Copulas
+
+### Gaussian Copula
+
+### GMRF Copula
+
+
+# Data
+
+## Sampling from the copula
+
+```{r}
+dim <- c(30, 20)
+rho <- c(0.7, 0.9)
+nu <- 2
+n_obs <- 10
+mu <- 6
+sigma <- 2
+xi <- 0.1
+
+Z <- rmatern_copula(n_obs, dim, rho, nu)
+U <- pnorm(Z)
+Y <- qgev(U, loc = mu, scale = sigma, shape = xi)
+```
+
+
+```{r}
+#| code-fold: true
+#| fig-asp: 0.4
+#| out-width: 100%
+#| fig-width: 8
+#| column: page
+tibble(
+  Z = Z[, 1],
+  U = U[, 1],
+  Y = Y[, 1]
+) |> 
+  mutate(
+    x = rep(seq_len(dim[1]), each = dim[2]),
+    y = rep(seq_len(dim[2]), times = dim[1])
+  ) |> 
+  pivot_longer(c(Z, U, Y)) |> 
+  mutate(
+    name = fct_relevel(name, "Z", "U", "Y"),
+    name2 = fct_recode(
+      name,
+      "Gaussian" = "Z",
+      "Uniform" = "U",
+      "GEV" = "Y"
+    )
+  ) |> 
+  group_by(name) |> 
+  group_map(
+    \(data, ...) {
+      data |> 
+        ggplot(aes(x, y, fill = value)) +
+        geom_raster() +
+        scale_fill_viridis_c() +
+        coord_cartesian(expand = FALSE) +
+        theme(
+          legend.position = "none"
+        ) +
+        labs(
+          x = NULL,
+          y = NULL,
+          subtitle = unique(data$name2)
+        )
+    }
+  ) |> 
+  wrap_plots(ncol = 3) +
+  plot_annotation(
+    title = "Sampling from the Gaussian Copula",
+    subtitle = "Going from Gaussian to Uniform to GEV"
+  )
+```
+
+# Modeling
+
+```{r}
+#| eval: false
+folded <- cmdstanr::cmdstan_model(
+  here::here("casestudy", "Stan", "folded.stan"),
+  include_paths = here::here("stanfunctions"),
+  quiet = TRUE
+)
+```
+
+```{r}
+#| eval: false
+stan_data <- list(
+  dim1 = dim[1],
+  dim2 = dim[2],
+  nu = nu,
+  n_obs = n_obs,
+  y = Y
+)
+
+gev_fit <- evd::fgev(Y)$estimate
+inits <- list(
+  mu = gev_fit[1],
+  sigma = gev_fit[2],
+  xi = pmax(gev_fit[3], 0),
+  rho = c(0.5, 0.5)
+)
+
+
+results <- folded$sample(
+  data = stan_data,
+  chains = 4,
+  parallel_chains = 4,
+  init = list(inits, inits, inits, inits)
+)
+```

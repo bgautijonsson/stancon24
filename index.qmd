@@ -1,0 +1,38 @@
+---
+title: "Brynjólfur Gauti Guðrúnar Jónsson"
+about:
+  id: aboutme
+  template: trestles
+  image: images/binni.jpg
+  links:
+    - icon: bi-house-door-fill
+      href: https://bggj.is
+    - icon: twitter
+      href: https://x.com/bggjonsson
+    - icon: github
+      href: https://github.com/bgautijonsson
+---
+
+:::{#aboutme}
+
+## Overview
+
+This website contains materials for my StanCon24 talk on applying Gaussian Markov Random Field (GMRF) copulas to model data-level spatial dependence on the data level.
+
+If you see me, please feel free to come and chat about statistics, music, books or anything at all!
+
+## Resources
+
+- [Presentation Slides](/presentation/)
+- [GitHub Repository](https://github.com/bgautijonsson/stancon24)
+- [Manuscript](https://bggj.is/materneigenpaper/)
+
+## Contact
+
+Brynjólfur Gauti Guðrúnar Jónsson  
+PhD Student in Statistics  
+University of Iceland  
+Email: [brynjolfur@hi.is](mailto:brynjolfur@hi.is)
+
+
+:::
