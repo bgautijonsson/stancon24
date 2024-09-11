@@ -144,7 +144,7 @@ functions {
 
         real lambda = pow(E1.2[i] + E2.2[j], nu + 1) * square(norm_v);
         
-        g += lambda * v * v' * y;
+        g += v * lambda * v' * y;
         tau_tilde += square(v) * lambda;
       }
     }

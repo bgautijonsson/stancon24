@@ -5,15 +5,12 @@ library(gt)
 library(gtExtras)
 library(scales)
 library(ggh4x)
+library(geomtextpath)
 theme_set(bggjphd::theme_bggj())
 
 d <- here("benchmark", "results") |>
   open_dataset() |>
   collect()
-
-d |>
-  distinct(iter, n_obs, dim1) |>
-  arrange(desc(iter))
 
 d |>
   mutate(
@@ -33,10 +30,23 @@ d |>
   ) |>
   arrange(iter) |>
   ggplot(aes(rho_mean, mean_ll, col = model, fill = model)) +
-  geom_smooth() +
+  geom_smooth(col = NA, alpha = 0.1) +
+  geom_textsmooth(aes(label = model)) +
+  scale_x_continuous(
+    limits = c(0, 1),
+    guide = guide_axis_truncated()
+  ) +
+  scale_y_continuous(
+    guide = guide_axis_truncated()
+  ) +
   scale_fill_brewer(palette = "Set1") +
   scale_colour_brewer(palette = "Set1") +
-  facet_grid(cols = vars(nu), rows = vars(dim1))
+  facet_grid(cols = vars(nu)) +
+  labs(
+    x = expression(rho),
+    y = "elppd"
+  ) +
+  theme(legend.position = "none")
 
 d |>
   mutate(
@@ -62,10 +72,31 @@ d |>
   ) |>
   ggplot(aes(rho_mean, diff, col = nu, fill = nu, group = nu)) +
   geom_hline(yintercept = 0, lty = 2) +
-  geom_smooth() +
+  geom_textsmooth(
+    aes(label = glue::glue("&nu; = {nu}")),
+    rich = TRUE,
+    size = 5
+  ) +
+  geom_smooth(col = NA, alpha = 0.2) +
+  scale_x_continuous(
+    limits = c(0, 1),
+    guide = guide_axis_truncated()
+  ) +
+  scale_y_continuous(
+    guide = guide_axis_truncated()
+  ) +
   scale_fill_brewer(palette = "Set1") +
   scale_colour_brewer(palette = "Set1") +
-  facet_grid(cols = vars(nu), rows = vars(dim1))
+  labs(
+    x = expression(rho),
+    y = expression(paste(elppd - elppd[i.i.d.]))
+  ) +
+  theme(legend.position = "none")
+
+ggsave(
+  filename = "diff_elppd.png",
+  width = 8, height = 0.5 * 8, scale = 1.3
+)
 
 d |>
   mutate(

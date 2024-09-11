@@ -161,11 +161,32 @@
     "text": "Exact Stan Model\n\nreal matern_copula_exact_lpdf(matrix Z, int dim1, real rho1, int dim2, real rho2, int nu) {\n  int n_obs = cols(Z);\n  int D = dim1 * dim2;\n  tuple(matrix[dim1, dim1], vector[dim1]) E1 = ar1_precision_eigen(dim1, rho1);\n  tuple(matrix[dim2, dim2], vector[dim2]) E2 = ar1_precision_eigen(dim2, rho2);\n\n  real log_det = 0;\n  real quadform_sum = 0;\n\n  vector[D] marginal_sds = marginal_sd(E1, E2, nu);\n\n  for (i in 1:dim1) {\n    for (j in 1:dim2) {\n      vector[D] v = kronecker(E1.1[, i], E2.1[, j]);\n      v = v .* marginal_sds;  \n      real norm_v = sqrt(sum(square(v)));\n      v /= norm_v;  \n      \n      real lambda = pow(E1.2[i] + E2.2[j], nu + 1) * square(norm_v);\n      log_det += log(lambda);\n      \n      row_vector[n_obs] q = v' * Z;  \n      quadform_sum += dot_self(q) * lambda;\n    }\n  }\n\n  real z_squared = sum(columns_dot_self(Z));\n\n  return -0.5 * (quadform_sum - n_obs * log_det - z_squared);\n}"
   },
   {
+    "objectID": "presentation/index.html#psis-loo-cv",
+    "href": "presentation/index.html#psis-loo-cv",
+    "title": "Gaussian Copulas for Large Spatial Fields",
+    "section": "PSIS-LOO-CV",
+    "text": "PSIS-LOO-CV\n\n\n\n\n\n\nvector matern_cond_loglik(vector y, int dim1, real rho1, int dim2, real rho2, int nu) {\n  int D = dim1 * dim2;\n  tuple(matrix[dim1, dim1], vector[dim1]) E1 = ar1_precision_eigen(dim1, rho1);\n  tuple(matrix[dim2, dim2], vector[dim2]) E2 = ar1_precision_eigen(dim2, rho2);\n\n  vector[D] marginal_sds = marginal_sd(E1, E2, nu);\n  vector[D] g = rep_vector(0, D);\n  vector[D] tau_tilde = rep_vector(0, D);\n\n  for (i in 1:dim1) {\n    for (j in 1:dim2) {\n      vector[D] v = kronecker(E1.1[, i], E2.1[, j]);\n      v = v .* marginal_sds;\n      real norm_v = sqrt(sum(square(v)));\n      v /= norm_v;\n\n      real lambda = pow(E1.2[i] + E2.2[j], nu + 1) * square(norm_v);\n      \n      g += v * lambda * v' * y;\n      tau_tilde += square(v) * lambda;\n  }\n}"
+  },
+  {
     "objectID": "presentation/index.html#approximation",
     "href": "presentation/index.html#approximation",
     "title": "Gaussian Copulas for Large Spatial Fields",
     "section": "Approximation",
-    "text": "Approximation\n\nvector fold_data(vector x, int n1, int n2) {\n  vector[4 * n1 * n2] folded;\n  for (i in 1:n1) {\n    for (j in 1:n2) {\n      int idx = (i - 1) * n2 + j;\n      folded[(i - 1) * 2 * n2 + j] = x[idx];\n      folded[(i - 1) * 2 * n2 + (2 * n2 - j + 1)] = x[idx];\n      folded[(2 * n1 - i) * 2 * n2 + j] = x[idx];\n      folded[(2 * n1 - i) * 2 * n2 + (2 * n2 - j + 1)] = x[idx];\n    }\n  }\n  return folded;\n}\n\n\ncomplex_matrix create_base_matrix_and_rescale_eigenvalues(int dim1, int dim2, real rho1, real rho2, int nu) {\n  \n  matrix[dim2, dim1] c = make_base_matrix(dim1, dim2, rho1, rho2);\n\n  // Compute the eigenvalues and marginal standard deviation\n  complex_matrix[dim2, dim1] sqrt_eigs = pow(fft2(c), (nu + 1.0) / 2.0);\n  complex_matrix[dim2, dim1] inv_sqrt_eigs = pow(sqrt_eigs, -1);\n  real msd = get_real(inv_fft2(inv_sqrt_eigs)[1, 1]);\n  sqrt_eigs *= msd;\n  \n  return sqrt_eigs;\n}\n\n\nreal matern_folded_copula_lpdf(matrix Z, int dim1, int dim2, real rho1, real rho2, int nu) {\n  int n_obs = cols(Z);\n  complex_matrix[2 * dim2, 2 * dim1] eigs = create_base_matrix_and_rescale_eigenvalues(2 * dim1, 2 * dim2, rho1, rho2, nu);\n  real quad_forms = 0;\n  real log_det = sum(log(get_real(eigs)));\n  for (i in 1:n_obs) {\n    vector[4 * dim1 * dim2] Z_fold = fold_data(Z[, i], dim1, dim2);\n    vector[4 * dim1 * dim2] Qz = matvec_prod(eigs, Z_fold);\n    quad_forms += dot_product(Z_fold, Qz) - dot_self(Z_fold);\n  } \n  return - 0.5 * (quad_forms - n_obs * log_det);\n}"
+    "text": "Approximation\n\nvector fold_data(vector x, int n1, int n2) {\n  vector[4 * n1 * n2] folded;\n  for (i in 1:n1) {\n    for (j in 1:n2) {\n      int idx = (i - 1) * n2 + j;\n      folded[(i - 1) * 2 * n2 + j] = x[idx];\n      folded[(i - 1) * 2 * n2 + (2 * n2 - j + 1)] = x[idx];\n      folded[(2 * n1 - i) * 2 * n2 + j] = x[idx];\n      folded[(2 * n1 - i) * 2 * n2 + (2 * n2 - j + 1)] = x[idx];\n    }\n  }\n  return folded;\n}\n\n\ncomplex_matrix create_base_matrix_and_rescale_eigenvalues(int dim1, int dim2, real rho1, real rho2, int nu) {\n  \n  matrix[dim2, dim1] c = make_base_matrix(dim1, dim2, rho1, rho2);\n\n  // Compute the eigenvalues and marginal standard deviation\n  complex_matrix[dim2, dim1] eigs = pow(fft2(c), (nu + 1.0));\n  complex_matrix[dim2, dim1] inv_eigs = pow(eigs, -1);\n  real mvar = get_real(inv_fft2(inv_eigs)[1, 1]);\n  eigs *= mvar;\n  \n  return eigs;\n}\n\n\nreal matern_folded_copula_lpdf(matrix Z, int dim1, int dim2, real rho1, real rho2, int nu) {\n  int n_obs = cols(Z);\n  complex_matrix[2 * dim2, 2 * dim1] eigs = create_base_matrix_and_rescale_eigenvalues(2 * dim1, 2 * dim2, rho1, rho2, nu);\n  real quad_forms = 0;\n  real log_det = sum(log(get_real(eigs)));\n  for (i in 1:n_obs) {\n    vector[4 * dim1 * dim2] Z_fold = fold_data(Z[, i], dim1, dim2);\n    vector[4 * dim1 * dim2] Qz = matvec_prod(eigs, Z_fold);\n    quad_forms += dot_product(Z_fold, Qz) - dot_self(Z_fold);\n  } \n  return - 0.5 * (quad_forms - n_obs * log_det);\n}"
+  },
+  {
+    "objectID": "presentation/index.html#data-generation",
+    "href": "presentation/index.html#data-generation",
+    "title": "Gaussian Copulas for Large Spatial Fields",
+    "section": "Data Generation",
+    "text": "Data Generation\n\n\ntictoc::tic()\nX &lt;- rmatern_copula_folded_full(n = 100, dim1 = 400, dim2 = 180, rho1 = 0.8, rho2 = 0.9, nu = 2)\ntictoc::toc()\n\n1.232 sec elapsed\n\n\n\nplot_matern(X[, 1], 400, 180)\n\n\n\n\n\n\n\n\n\nplot_matern(X[, 2], 400, 180)\n\n\n\n\n\n\n\n\n\n\napply(X, 1, var) |&gt; hist()\n\n\n\n\n\n\n\n\n\napply(X, 1, mean) |&gt; hist()"
+  },
+  {
+    "objectID": "presentation/index.html#maximum-likelihood",
+    "href": "presentation/index.html#maximum-likelihood",
+    "title": "Gaussian Copulas for Large Spatial Fields",
+    "section": "Maximum Likelihood",
+    "text": "Maximum Likelihood\n\n\nSetup\n\nlibrary(stdmatern)\ndim1 &lt;- 50; dim2 &lt;- 50\nrho1 &lt;- 0.9; rho2 &lt;- 0.5\nnu &lt;- 1\nn_obs &lt;- 5\nZ &lt;- rmatern_copula_eigen(n_obs, dim1, dim2, rho1, rho2, nu)\nU &lt;- pnorm(Z)\nY &lt;- qgev(U, loc = 6, scale = 2, shape = 0.1)\n\nLog-likelihood\n\nlog_lik &lt;- function(par, Y) {\n  mu &lt;- exp(par[1])\n  sigma &lt;- exp(par[2] + par[1])\n  xi &lt;- exp(par[3])\n  rho1 &lt;- plogis(par[4])\n  rho2 &lt;- plogis(par[5])\n  u &lt;- evd::pgev(Y, loc = mu, scale = sigma, shape = xi)\n  z &lt;- qnorm(u)\n  ll_marg &lt;- sum(evd::dgev(Y, loc = mu, scale = sigma, shape = xi, log = TRUE))\n  ll_copula &lt;- sum(dmatern_copula_eigen(z, dim1, dim2, rho1, rho2, nu))\n  ll_copula + ll_marg\n}\n\nOptimize\n\ntictoc::tic()\nres &lt;- optim(\n  par = c(0, 0, 0, 0, 0),\n  log_lik,\n  control = list(fnscale = -1),\n  Y = Y,\n  hessian = TRUE,\n  method = \"L-BFGS-B\"\n)\ntictoc::toc()\n\n2.349 sec elapsed\n\n\n\n \nResults\n\nse &lt;- sqrt(diag(solve(-res$hessian)))\nci &lt;- res$par + c(-1.96, 1.96) * se\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nEstimate\n95% CI\n\n\nLower\nUpper\n\n\n\n\nμ\n6.164\n5.925\n6.412\n\n\nσ\n2.126\n1.952\n2.316\n\n\nξ\n0.123\n0.103\n0.148\n\n\nρ1\n0.901\n0.895\n0.906\n\n\nρ2\n0.506\n0.482\n0.530"
   },
   {
     "objectID": "presentation/index.html#benchmark-density-computations",
@@ -180,13 +201,6 @@
     "title": "Gaussian Copulas for Large Spatial Fields",
     "section": "Approximating the Correlation Matrix",
     "text": "Approximating the Correlation Matrix"
-  },
-  {
-    "objectID": "presentation/index.html#data-generation",
-    "href": "presentation/index.html#data-generation",
-    "title": "Gaussian Copulas for Large Spatial Fields",
-    "section": "Data Generation",
-    "text": "Data Generation\n\n\ntictoc::tic()\nX &lt;- rmatern_copula_folded_full(n = 100, dim1 = 400, dim2 = 180, rho1 = 0.8, rho2 = 0.9, nu = 2)\ntictoc::toc()\n\n1.232 sec elapsed\n\n\n\nplot_matern(X[, 1], 400, 180)\n\n\n\n\n\n\n\n\n\nplot_matern(X[, 2], 400, 180)\n\n\n\n\n\n\n\n\n\n\napply(X, 1, var) |&gt; hist()\n\n\n\n\n\n\n\n\n\napply(X, 1, mean) |&gt; hist()"
   },
   {
     "objectID": "presentation/index.html#conclusion-and-future-work",

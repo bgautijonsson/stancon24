@@ -436,11 +436,11 @@ Brynjólfur Gauti Guðrúnar Jónsson
 </div>
 
 <img data-src="index_files/figure-revealjs/unnamed-chunk-2-1.png" width="960" class="r-stretch"></section>
-<section id="example-1" class="slide level2" data-name="Copulas">
+<section id="example-1" class="slide level2">
 <h2>Example</h2>
 
 <img data-src="index_files/figure-revealjs/unnamed-chunk-4-1.png" width="960" class="r-stretch"></section>
-<section id="example-2" class="slide level2" data-name="Copulas">
+<section id="example-2" class="slide level2">
 <h2>Example</h2>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a></a>U <span class="ot">&lt;-</span> <span class="fu">pnorm</span>(Z)</span>
@@ -448,18 +448,18 @@ Brynjólfur Gauti Guðrúnar Jónsson
 </div>
 
 <img data-src="index_files/figure-revealjs/unnamed-chunk-6-1.png" width="960" class="r-stretch"></section>
-<section id="example-3" class="slide level2" data-name="Copulas">
+<section id="example-3" class="slide level2">
 <h2>Example</h2>
 
 <img data-src="index_files/figure-revealjs/unnamed-chunk-7-1.png" width="960" class="r-stretch"></section>
-<section id="example-4" class="slide level2" data-name="Copulas">
+<section id="example-4" class="slide level2">
 <h2>Example</h2>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a></a>Q <span class="ot">&lt;-</span> <span class="fu">make_AR_prec_matrix</span>(<span class="at">dim =</span> <span class="dv">60</span>, <span class="at">rho =</span> <span class="sc">-</span><span class="fl">0.8</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 
 <img data-src="index_files/figure-revealjs/unnamed-chunk-9-1.png" width="960" class="r-stretch"></section>
-<section id="whats-going-on" class="slide level2" data-name="Copulas" style="font-size:60%">
+<section id="whats-going-on" class="slide level2" style="font-size:60%">
 <h2>What’s going on?</h2>
 <ul>
 <li><span class="math inline">\(y_t\)</span> is marginally <span class="math inline">\(\mathrm{GEV}(\mu, \sigma, \xi)\)</span></li>
@@ -483,7 +483,7 @@ z_t &amp;= \Phi^{-1}(u_t)
 <li>How to estimate all of this?</li>
 </ul>
 </section>
-<section id="copulas" class="slide level2" data-name="Copulas">
+<section id="copulas" class="slide level2">
 <h2>Copulas</h2>
 <div style="font-size:65%; margin-top:20px;">
 <p><strong>Sklar’s Theorem</strong>: For any multivariate distribution <span class="math inline">\(H\)</span>, there exists a unique copula <span class="math inline">\(C\)</span> such that:</p>
@@ -501,11 +501,11 @@ h(x) &amp;= c(F_1(x_1), \dots, F_d(x_d)) \prod_{i=1}^d f_i(x_i) \\
 \]</span></p>
 </div>
 </section>
-<section id="have-no-fear" class="slide level2" data-name="Copulas">
+<section id="have-no-fear" class="slide level2">
 <h2>Have no fear</h2>
 
 <img data-src="images/predator.jpg" class="quarto-figure quarto-figure-center r-stretch"></section>
-<section id="stan-model" class="slide level2" data-name="Copulas" style="font-size:60%">
+<section id="stan-model" class="slide level2" style="font-size:60%">
 <h2>Stan Model</h2>
 <div class="columns">
 <div class="column" style="width:50%;">
@@ -1011,7 +1011,7 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
 </div></div>
 </div>
 </section>
-<section id="exact-stan-model" class="slide level2" data-name="Results" style="font-size:60%">
+<section id="exact-stan-model" class="slide level2" style="font-size:60%">
 <h2>Exact Stan Model</h2>
 <div class="cell" data-output.var="matern_copula">
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource stan number-lines code-with-copy"><code class="sourceCode stan"><span id="cb10-1"><a></a><span class="dt">real</span> matern_copula_exact_lpdf(<span class="dt">matrix</span> Z, <span class="dt">int</span> dim1, <span class="dt">real</span> rho1, <span class="dt">int</span> dim2, <span class="dt">real</span> rho2, <span class="dt">int</span> nu) {</span>
@@ -1046,73 +1046,722 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
 <span id="cb10-30"><a></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
+<section id="psis-loo-cv" class="slide level2" style="font-size:60%">
+<h2>PSIS-LOO-CV</h2>
+<div class="columns">
+<div class="column" style="width:50%;">
+<p><img data-src="images/burkner.png"></p>
+<p><img data-src="images/burkner2.png"></p>
+</div><div class="column" style="width:50%;">
+<div class="cell" data-output.var="psisloo_exact">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource stan number-lines code-with-copy"><code class="sourceCode stan"><span id="cb11-1"><a></a><span class="dt">vector</span> matern_cond_loglik(<span class="dt">vector</span> y, <span class="dt">int</span> dim1, <span class="dt">real</span> rho1, <span class="dt">int</span> dim2, <span class="dt">real</span> rho2, <span class="dt">int</span> nu) {</span>
+<span id="cb11-2"><a></a>  <span class="dt">int</span> D = dim1 * dim2;</span>
+<span id="cb11-3"><a></a>  <span class="dt">tuple</span>(<span class="dt">matrix</span>[dim1, dim1], <span class="dt">vector</span>[dim1]) E1 = ar1_precision_eigen(dim1, rho1);</span>
+<span id="cb11-4"><a></a>  <span class="dt">tuple</span>(<span class="dt">matrix</span>[dim2, dim2], <span class="dt">vector</span>[dim2]) E2 = ar1_precision_eigen(dim2, rho2);</span>
+<span id="cb11-5"><a></a></span>
+<span id="cb11-6"><a></a>  <span class="dt">vector</span>[D] marginal_sds = marginal_sd(E1, E2, nu);</span>
+<span id="cb11-7"><a></a>  <span class="dt">vector</span>[D] g = rep_vector(<span class="dv">0</span>, D);</span>
+<span id="cb11-8"><a></a>  <span class="dt">vector</span>[D] tau_tilde = rep_vector(<span class="dv">0</span>, D);</span>
+<span id="cb11-9"><a></a></span>
+<span id="cb11-10"><a></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span>:dim1) {</span>
+<span id="cb11-11"><a></a>    <span class="cf">for</span> (j <span class="cf">in</span> <span class="dv">1</span>:dim2) {</span>
+<span id="cb11-12"><a></a>      <span class="dt">vector</span>[D] v = kronecker(E1<span class="fl">.1</span>[, i], E2<span class="fl">.1</span>[, j]);</span>
+<span id="cb11-13"><a></a>      v = v .* marginal_sds;</span>
+<span id="cb11-14"><a></a>      <span class="dt">real</span> norm_v = sqrt(sum(square(v)));</span>
+<span id="cb11-15"><a></a>      v /= norm_v;</span>
+<span id="cb11-16"><a></a></span>
+<span id="cb11-17"><a></a>      <span class="dt">real</span> lambda = pow(E1<span class="fl">.2</span>[i] + E2<span class="fl">.2</span>[j], nu + <span class="dv">1</span>) * square(norm_v);</span>
+<span id="cb11-18"><a></a>      </span>
+<span id="cb11-19"><a></a>      g += v * lambda * v' * y;</span>
+<span id="cb11-20"><a></a>      tau_tilde += square(v) * lambda;</span>
+<span id="cb11-21"><a></a>  }</span>
+<span id="cb11-22"><a></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div></div>
+</section>
 <section id="approximation" class="slide level2" style="font-size:50%">
 <h2>Approximation</h2>
 <div class="cell" data-output.var="fold_data">
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource stan number-lines code-with-copy"><code class="sourceCode stan"><span id="cb11-1"><a></a><span class="dt">vector</span> fold_data(<span class="dt">vector</span> x, <span class="dt">int</span> n1, <span class="dt">int</span> n2) {</span>
-<span id="cb11-2"><a></a>  <span class="dt">vector</span>[<span class="dv">4</span> * n1 * n2] folded;</span>
-<span id="cb11-3"><a></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span>:n1) {</span>
-<span id="cb11-4"><a></a>    <span class="cf">for</span> (j <span class="cf">in</span> <span class="dv">1</span>:n2) {</span>
-<span id="cb11-5"><a></a>      <span class="dt">int</span> idx = (i - <span class="dv">1</span>) * n2 + j;</span>
-<span id="cb11-6"><a></a>      folded[(i - <span class="dv">1</span>) * <span class="dv">2</span> * n2 + j] = x[idx];</span>
-<span id="cb11-7"><a></a>      folded[(i - <span class="dv">1</span>) * <span class="dv">2</span> * n2 + (<span class="dv">2</span> * n2 - j + <span class="dv">1</span>)] = x[idx];</span>
-<span id="cb11-8"><a></a>      folded[(<span class="dv">2</span> * n1 - i) * <span class="dv">2</span> * n2 + j] = x[idx];</span>
-<span id="cb11-9"><a></a>      folded[(<span class="dv">2</span> * n1 - i) * <span class="dv">2</span> * n2 + (<span class="dv">2</span> * n2 - j + <span class="dv">1</span>)] = x[idx];</span>
-<span id="cb11-10"><a></a>    }</span>
-<span id="cb11-11"><a></a>  }</span>
-<span id="cb11-12"><a></a>  <span class="cf">return</span> folded;</span>
-<span id="cb11-13"><a></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource stan number-lines code-with-copy"><code class="sourceCode stan"><span id="cb12-1"><a></a><span class="dt">vector</span> fold_data(<span class="dt">vector</span> x, <span class="dt">int</span> n1, <span class="dt">int</span> n2) {</span>
+<span id="cb12-2"><a></a>  <span class="dt">vector</span>[<span class="dv">4</span> * n1 * n2] folded;</span>
+<span id="cb12-3"><a></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span>:n1) {</span>
+<span id="cb12-4"><a></a>    <span class="cf">for</span> (j <span class="cf">in</span> <span class="dv">1</span>:n2) {</span>
+<span id="cb12-5"><a></a>      <span class="dt">int</span> idx = (i - <span class="dv">1</span>) * n2 + j;</span>
+<span id="cb12-6"><a></a>      folded[(i - <span class="dv">1</span>) * <span class="dv">2</span> * n2 + j] = x[idx];</span>
+<span id="cb12-7"><a></a>      folded[(i - <span class="dv">1</span>) * <span class="dv">2</span> * n2 + (<span class="dv">2</span> * n2 - j + <span class="dv">1</span>)] = x[idx];</span>
+<span id="cb12-8"><a></a>      folded[(<span class="dv">2</span> * n1 - i) * <span class="dv">2</span> * n2 + j] = x[idx];</span>
+<span id="cb12-9"><a></a>      folded[(<span class="dv">2</span> * n1 - i) * <span class="dv">2</span> * n2 + (<span class="dv">2</span> * n2 - j + <span class="dv">1</span>)] = x[idx];</span>
+<span id="cb12-10"><a></a>    }</span>
+<span id="cb12-11"><a></a>  }</span>
+<span id="cb12-12"><a></a>  <span class="cf">return</span> folded;</span>
+<span id="cb12-13"><a></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell" data-output.var="base_matrix">
-<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource stan number-lines code-with-copy"><code class="sourceCode stan"><span id="cb12-1"><a></a><span class="dt">complex_matrix</span> create_base_matrix_and_rescale_eigenvalues(<span class="dt">int</span> dim1, <span class="dt">int</span> dim2, <span class="dt">real</span> rho1, <span class="dt">real</span> rho2, <span class="dt">int</span> nu) {</span>
-<span id="cb12-2"><a></a>  </span>
-<span id="cb12-3"><a></a>  <span class="dt">matrix</span>[dim2, dim1] c = make_base_matrix(dim1, dim2, rho1, rho2);</span>
-<span id="cb12-4"><a></a></span>
-<span id="cb12-5"><a></a>  <span class="co">// Compute the eigenvalues and marginal standard deviation</span></span>
-<span id="cb12-6"><a></a>  <span class="dt">complex_matrix</span>[dim2, dim1] sqrt_eigs = pow(fft2(c), (nu + <span class="fl">1.0</span>) / <span class="fl">2.0</span>);</span>
-<span id="cb12-7"><a></a>  <span class="dt">complex_matrix</span>[dim2, dim1] inv_sqrt_eigs = pow(sqrt_eigs, -<span class="dv">1</span>);</span>
-<span id="cb12-8"><a></a>  <span class="dt">real</span> msd = get_real(inv_fft2(inv_sqrt_eigs)[<span class="dv">1</span>, <span class="dv">1</span>]);</span>
-<span id="cb12-9"><a></a>  sqrt_eigs *= msd;</span>
-<span id="cb12-10"><a></a>  </span>
-<span id="cb12-11"><a></a>  <span class="cf">return</span> sqrt_eigs;</span>
-<span id="cb12-12"><a></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-<div class="cell" data-output.var="folded_copula">
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource stan number-lines code-with-copy"><code class="sourceCode stan"><span id="cb13-1"><a></a><span class="dt">real</span> matern_folded_copula_lpdf(<span class="dt">matrix</span> Z, <span class="dt">int</span> dim1, <span class="dt">int</span> dim2, <span class="dt">real</span> rho1, <span class="dt">real</span> rho2, <span class="dt">int</span> nu) {</span>
-<span id="cb13-2"><a></a>  <span class="dt">int</span> n_obs = cols(Z);</span>
-<span id="cb13-3"><a></a>  <span class="dt">complex_matrix</span>[<span class="dv">2</span> * dim2, <span class="dv">2</span> * dim1] eigs = create_base_matrix_and_rescale_eigenvalues(<span class="dv">2</span> * dim1, <span class="dv">2</span> * dim2, rho1, rho2, nu);</span>
-<span id="cb13-4"><a></a>  <span class="dt">real</span> quad_forms = <span class="dv">0</span>;</span>
-<span id="cb13-5"><a></a>  <span class="dt">real</span> log_det = sum(log(get_real(eigs)));</span>
-<span id="cb13-6"><a></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span>:n_obs) {</span>
-<span id="cb13-7"><a></a>    <span class="dt">vector</span>[<span class="dv">4</span> * dim1 * dim2] Z_fold = fold_data(Z[, i], dim1, dim2);</span>
-<span id="cb13-8"><a></a>    <span class="dt">vector</span>[<span class="dv">4</span> * dim1 * dim2] Qz = matvec_prod(eigs, Z_fold);</span>
-<span id="cb13-9"><a></a>    quad_forms += dot_product(Z_fold, Qz) - dot_self(Z_fold);</span>
-<span id="cb13-10"><a></a>  } </span>
-<span id="cb13-11"><a></a>  <span class="cf">return</span> - <span class="fl">0.5</span> * (quad_forms - n_obs * log_det);</span>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource stan number-lines code-with-copy"><code class="sourceCode stan"><span id="cb13-1"><a></a><span class="dt">complex_matrix</span> create_base_matrix_and_rescale_eigenvalues(<span class="dt">int</span> dim1, <span class="dt">int</span> dim2, <span class="dt">real</span> rho1, <span class="dt">real</span> rho2, <span class="dt">int</span> nu) {</span>
+<span id="cb13-2"><a></a>  </span>
+<span id="cb13-3"><a></a>  <span class="dt">matrix</span>[dim2, dim1] c = make_base_matrix(dim1, dim2, rho1, rho2);</span>
+<span id="cb13-4"><a></a></span>
+<span id="cb13-5"><a></a>  <span class="co">// Compute the eigenvalues and marginal standard deviation</span></span>
+<span id="cb13-6"><a></a>  <span class="dt">complex_matrix</span>[dim2, dim1] eigs = pow(fft2(c), (nu + <span class="fl">1.0</span>));</span>
+<span id="cb13-7"><a></a>  <span class="dt">complex_matrix</span>[dim2, dim1] inv_eigs = pow(eigs, -<span class="dv">1</span>);</span>
+<span id="cb13-8"><a></a>  <span class="dt">real</span> mvar = get_real(inv_fft2(inv_eigs)[<span class="dv">1</span>, <span class="dv">1</span>]);</span>
+<span id="cb13-9"><a></a>  eigs *= mvar;</span>
+<span id="cb13-10"><a></a>  </span>
+<span id="cb13-11"><a></a>  <span class="cf">return</span> eigs;</span>
 <span id="cb13-12"><a></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+<div class="cell" data-output.var="folded_copula">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource stan number-lines code-with-copy"><code class="sourceCode stan"><span id="cb14-1"><a></a><span class="dt">real</span> matern_folded_copula_lpdf(<span class="dt">matrix</span> Z, <span class="dt">int</span> dim1, <span class="dt">int</span> dim2, <span class="dt">real</span> rho1, <span class="dt">real</span> rho2, <span class="dt">int</span> nu) {</span>
+<span id="cb14-2"><a></a>  <span class="dt">int</span> n_obs = cols(Z);</span>
+<span id="cb14-3"><a></a>  <span class="dt">complex_matrix</span>[<span class="dv">2</span> * dim2, <span class="dv">2</span> * dim1] eigs = create_base_matrix_and_rescale_eigenvalues(<span class="dv">2</span> * dim1, <span class="dv">2</span> * dim2, rho1, rho2, nu);</span>
+<span id="cb14-4"><a></a>  <span class="dt">real</span> quad_forms = <span class="dv">0</span>;</span>
+<span id="cb14-5"><a></a>  <span class="dt">real</span> log_det = sum(log(get_real(eigs)));</span>
+<span id="cb14-6"><a></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span>:n_obs) {</span>
+<span id="cb14-7"><a></a>    <span class="dt">vector</span>[<span class="dv">4</span> * dim1 * dim2] Z_fold = fold_data(Z[, i], dim1, dim2);</span>
+<span id="cb14-8"><a></a>    <span class="dt">vector</span>[<span class="dv">4</span> * dim1 * dim2] Qz = matvec_prod(eigs, Z_fold);</span>
+<span id="cb14-9"><a></a>    quad_forms += dot_product(Z_fold, Qz) - dot_self(Z_fold);</span>
+<span id="cb14-10"><a></a>  } </span>
+<span id="cb14-11"><a></a>  <span class="cf">return</span> - <span class="fl">0.5</span> * (quad_forms - n_obs * log_det);</span>
+<span id="cb14-12"><a></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 </section>
-<section id="benchmark-density-computations" class="slide level2">
-<h2>Benchmark: Density Computations</h2>
+<section id="data-generation" class="slide level2" data-name="Results">
+<h2>Data Generation</h2>
+<div class="columns" style="font-size:60%">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a></a>tictoc<span class="sc">::</span><span class="fu">tic</span>()</span>
+<span id="cb15-2"><a></a>X <span class="ot">&lt;-</span> <span class="fu">rmatern_copula_folded_full</span>(<span class="at">n =</span> <span class="dv">100</span>, <span class="at">dim1 =</span> <span class="dv">400</span>, <span class="at">dim2 =</span> <span class="dv">180</span>, <span class="at">rho1 =</span> <span class="fl">0.8</span>, <span class="at">rho2 =</span> <span class="fl">0.9</span>, <span class="at">nu =</span> <span class="dv">2</span>)</span>
+<span id="cb15-3"><a></a>tictoc<span class="sc">::</span><span class="fu">toc</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>1.232 sec elapsed</code></pre>
+</div>
+</div><div class="column" style="width:50%;text-align:center;">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a></a><span class="fu">plot_matern</span>(X[, <span class="dv">1</span>], <span class="dv">400</span>, <span class="dv">180</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure>
+<p><img data-src="index_files/figure-revealjs/unnamed-chunk-21-1.png" style="width:80.0%"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a></a><span class="fu">plot_matern</span>(X[, <span class="dv">2</span>], <span class="dv">400</span>, <span class="dv">180</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure>
+<p><img data-src="index_files/figure-revealjs/unnamed-chunk-22-1.png" style="width:80.0%"></p>
+</figure>
+</div>
+</div>
+</div>
+</div><div class="column" style="width:50%;">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a></a><span class="fu">apply</span>(X, <span class="dv">1</span>, var) <span class="sc">|&gt;</span> <span class="fu">hist</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure>
+<p><img data-src="index_files/figure-revealjs/unnamed-chunk-23-1.png" style="width:80.0%"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a></a><span class="fu">apply</span>(X, <span class="dv">1</span>, mean) <span class="sc">|&gt;</span> <span class="fu">hist</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure>
+<p><img data-src="index_files/figure-revealjs/unnamed-chunk-24-1.png" style="width:80.0%"></p>
+</figure>
+</div>
+</div>
+</div>
+</div></div>
+</section>
+<section id="maximum-likelihood" class="slide level2">
+<h2>Maximum Likelihood</h2>
+<div class="columns" style="font-size:50%">
+<div class="column" style="width:60%;">
+<p><strong>Setup</strong></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a></a><span class="fu">library</span>(stdmatern)</span>
+<span id="cb21-2"><a></a>dim1 <span class="ot">&lt;-</span> <span class="dv">50</span>; dim2 <span class="ot">&lt;-</span> <span class="dv">50</span></span>
+<span id="cb21-3"><a></a>rho1 <span class="ot">&lt;-</span> <span class="fl">0.9</span>; rho2 <span class="ot">&lt;-</span> <span class="fl">0.5</span></span>
+<span id="cb21-4"><a></a>nu <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb21-5"><a></a>n_obs <span class="ot">&lt;-</span> <span class="dv">5</span></span>
+<span id="cb21-6"><a></a>Z <span class="ot">&lt;-</span> <span class="fu">rmatern_copula_eigen</span>(n_obs, dim1, dim2, rho1, rho2, nu)</span>
+<span id="cb21-7"><a></a>U <span class="ot">&lt;-</span> <span class="fu">pnorm</span>(Z)</span>
+<span id="cb21-8"><a></a>Y <span class="ot">&lt;-</span> <span class="fu">qgev</span>(U, <span class="at">loc =</span> <span class="dv">6</span>, <span class="at">scale =</span> <span class="dv">2</span>, <span class="at">shape =</span> <span class="fl">0.1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p><strong>Log-likelihood</strong></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a></a>log_lik <span class="ot">&lt;-</span> <span class="cf">function</span>(par, Y) {</span>
+<span id="cb22-2"><a></a>  mu <span class="ot">&lt;-</span> <span class="fu">exp</span>(par[<span class="dv">1</span>])</span>
+<span id="cb22-3"><a></a>  sigma <span class="ot">&lt;-</span> <span class="fu">exp</span>(par[<span class="dv">2</span>] <span class="sc">+</span> par[<span class="dv">1</span>])</span>
+<span id="cb22-4"><a></a>  xi <span class="ot">&lt;-</span> <span class="fu">exp</span>(par[<span class="dv">3</span>])</span>
+<span id="cb22-5"><a></a>  rho1 <span class="ot">&lt;-</span> <span class="fu">plogis</span>(par[<span class="dv">4</span>])</span>
+<span id="cb22-6"><a></a>  rho2 <span class="ot">&lt;-</span> <span class="fu">plogis</span>(par[<span class="dv">5</span>])</span>
+<span id="cb22-7"><a></a>  u <span class="ot">&lt;-</span> evd<span class="sc">::</span><span class="fu">pgev</span>(Y, <span class="at">loc =</span> mu, <span class="at">scale =</span> sigma, <span class="at">shape =</span> xi)</span>
+<span id="cb22-8"><a></a>  z <span class="ot">&lt;-</span> <span class="fu">qnorm</span>(u)</span>
+<span id="cb22-9"><a></a>  ll_marg <span class="ot">&lt;-</span> <span class="fu">sum</span>(evd<span class="sc">::</span><span class="fu">dgev</span>(Y, <span class="at">loc =</span> mu, <span class="at">scale =</span> sigma, <span class="at">shape =</span> xi, <span class="at">log =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb22-10"><a></a>  ll_copula <span class="ot">&lt;-</span> <span class="fu">sum</span>(<span class="fu">dmatern_copula_eigen</span>(z, dim1, dim2, rho1, rho2, nu))</span>
+<span id="cb22-11"><a></a>  ll_copula <span class="sc">+</span> ll_marg</span>
+<span id="cb22-12"><a></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p><strong>Optimize</strong></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a></a>tictoc<span class="sc">::</span><span class="fu">tic</span>()</span>
+<span id="cb23-2"><a></a>res <span class="ot">&lt;-</span> <span class="fu">optim</span>(</span>
+<span id="cb23-3"><a></a>  <span class="at">par =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>),</span>
+<span id="cb23-4"><a></a>  log_lik,</span>
+<span id="cb23-5"><a></a>  <span class="at">control =</span> <span class="fu">list</span>(<span class="at">fnscale =</span> <span class="sc">-</span><span class="dv">1</span>),</span>
+<span id="cb23-6"><a></a>  <span class="at">Y =</span> Y,</span>
+<span id="cb23-7"><a></a>  <span class="at">hessian =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb23-8"><a></a>  <span class="at">method =</span> <span class="st">"L-BFGS-B"</span></span>
+<span id="cb23-9"><a></a>)</span>
+<span id="cb23-10"><a></a>tictoc<span class="sc">::</span><span class="fu">toc</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>2.349 sec elapsed</code></pre>
+</div>
+</div>
+</div><div class="column" style="width:40%;">
+<p><br> <br></p>
+<p><strong>Results</strong></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a></a>se <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(<span class="fu">diag</span>(<span class="fu">solve</span>(<span class="sc">-</span>res<span class="sc">$</span>hessian)))</span>
+<span id="cb25-2"><a></a>ci <span class="ot">&lt;-</span> res<span class="sc">$</span>par <span class="sc">+</span> <span class="fu">c</span>(<span class="sc">-</span><span class="fl">1.96</span>, <span class="fl">1.96</span>) <span class="sc">*</span> se</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 <div class="cell">
 <div class="cell-output-display">
-<div id="urwkjppubs" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#urwkjppubs table {
+<div id="xwagawglaw" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#xwagawglaw table {
   font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#urwkjppubs thead, #urwkjppubs tbody, #urwkjppubs tfoot, #urwkjppubs tr, #urwkjppubs td, #urwkjppubs th {
+#xwagawglaw thead, #xwagawglaw tbody, #xwagawglaw tfoot, #xwagawglaw tr, #xwagawglaw td, #xwagawglaw th {
   border-style: none;
 }
 
-#urwkjppubs p {
+#xwagawglaw p {
   margin: 0;
   padding: 0;
 }
 
-#urwkjppubs .gt_table {
+#xwagawglaw .gt_table {
+  display: table;
+  border-collapse: collapse;
+  line-height: normal;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: 100%;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#xwagawglaw .gt_caption {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+#xwagawglaw .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#xwagawglaw .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 3px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#xwagawglaw .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#xwagawglaw .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#xwagawglaw .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#xwagawglaw .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#xwagawglaw .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#xwagawglaw .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#xwagawglaw .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#xwagawglaw .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#xwagawglaw .gt_spanner_row {
+  border-bottom-style: hidden;
+}
+
+#xwagawglaw .gt_group_heading {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  text-align: left;
+}
+
+#xwagawglaw .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#xwagawglaw .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#xwagawglaw .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#xwagawglaw .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#xwagawglaw .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#xwagawglaw .gt_stub_row_group {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+  vertical-align: top;
+}
+
+#xwagawglaw .gt_row_group_first td {
+  border-top-width: 2px;
+}
+
+#xwagawglaw .gt_row_group_first th {
+  border-top-width: 2px;
+}
+
+#xwagawglaw .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#xwagawglaw .gt_first_summary_row {
+  border-top-style: solid;
+  border-top-color: #D3D3D3;
+}
+
+#xwagawglaw .gt_first_summary_row.thick {
+  border-top-width: 2px;
+}
+
+#xwagawglaw .gt_last_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#xwagawglaw .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#xwagawglaw .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#xwagawglaw .gt_last_grand_summary_row_top {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: double;
+  border-bottom-width: 6px;
+  border-bottom-color: #D3D3D3;
+}
+
+#xwagawglaw .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#xwagawglaw .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#xwagawglaw .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#xwagawglaw .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#xwagawglaw .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#xwagawglaw .gt_sourcenote {
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#xwagawglaw .gt_left {
+  text-align: left;
+}
+
+#xwagawglaw .gt_center {
+  text-align: center;
+}
+
+#xwagawglaw .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#xwagawglaw .gt_font_normal {
+  font-weight: normal;
+}
+
+#xwagawglaw .gt_font_bold {
+  font-weight: bold;
+}
+
+#xwagawglaw .gt_font_italic {
+  font-style: italic;
+}
+
+#xwagawglaw .gt_super {
+  font-size: 65%;
+}
+
+#xwagawglaw .gt_footnote_marks {
+  font-size: 75%;
+  vertical-align: 0.4em;
+  position: initial;
+}
+
+#xwagawglaw .gt_asterisk {
+  font-size: 100%;
+  vertical-align: 0;
+}
+
+#xwagawglaw .gt_indent_1 {
+  text-indent: 5px;
+}
+
+#xwagawglaw .gt_indent_2 {
+  text-indent: 10px;
+}
+
+#xwagawglaw .gt_indent_3 {
+  text-indent: 15px;
+}
+
+#xwagawglaw .gt_indent_4 {
+  text-indent: 20px;
+}
+
+#xwagawglaw .gt_indent_5 {
+  text-indent: 25px;
+}
+
+#xwagawglaw .katex-display {
+  display: inline-flex !important;
+  margin-bottom: 0.75em !important;
+}
+
+#xwagawglaw div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+  height: 0px !important;
+}
+</style>
+
+<table class="gt_table caption-top" data-quarto-postprocess="true" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header gt_col_headings gt_spanner_row">
+<th rowspan="2" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col"></th>
+<th rowspan="2" id="Estimate" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">Estimate</th>
+<th colspan="2" id="95% CI" class="gt_center gt_columns_top_border gt_column_spanner_outer" data-quarto-table-cell-role="th" scope="colgroup"><span class="gt_column_spanner">95% CI</span></th>
+</tr>
+<tr class="odd gt_col_headings">
+<th id="Lower" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">Lower</th>
+<th id="Upper" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">Upper</th>
+</tr>
+</thead>
+<tbody class="gt_table_body">
+<tr class="odd">
+<td class="gt_row gt_left" headers="par"><p><b>μ<sub></sub></b></p></td>
+<td class="gt_row gt_right" headers="estimate">6.164</td>
+<td class="gt_row gt_right" headers="lower">5.925</td>
+<td class="gt_row gt_right" headers="upper">6.412</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left gt_striped" headers="par"><p><b>σ<sub></sub></b></p></td>
+<td class="gt_row gt_right gt_striped" headers="estimate">2.126</td>
+<td class="gt_row gt_right gt_striped" headers="lower">1.952</td>
+<td class="gt_row gt_right gt_striped" headers="upper">2.316</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="par"><p><b>ξ<sub></sub></b></p></td>
+<td class="gt_row gt_right" headers="estimate">0.123</td>
+<td class="gt_row gt_right" headers="lower">0.103</td>
+<td class="gt_row gt_right" headers="upper">0.148</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left gt_striped" headers="par"><p><b>ρ<sub>1</sub></b></p></td>
+<td class="gt_row gt_right gt_striped" headers="estimate">0.901</td>
+<td class="gt_row gt_right gt_striped" headers="lower">0.895</td>
+<td class="gt_row gt_right gt_striped" headers="upper">0.906</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="par"><p><b>ρ<sub>2</sub></b></p></td>
+<td class="gt_row gt_right" headers="estimate">0.506</td>
+<td class="gt_row gt_right" headers="lower">0.482</td>
+<td class="gt_row gt_right" headers="upper">0.530</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</div></div>
+</section>
+<section id="benchmark-density-computations" class="slide level2">
+<h2>Benchmark: Density Computations</h2>
+<div class="cell">
+<div class="cell-output-display">
+<div id="cjkmkijpxo" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#cjkmkijpxo table {
+  font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#cjkmkijpxo thead, #cjkmkijpxo tbody, #cjkmkijpxo tfoot, #cjkmkijpxo tr, #cjkmkijpxo td, #cjkmkijpxo th {
+  border-style: none;
+}
+
+#cjkmkijpxo p {
+  margin: 0;
+  padding: 0;
+}
+
+#cjkmkijpxo .gt_table {
   display: table;
   border-collapse: collapse;
   line-height: normal;
@@ -1138,12 +1787,12 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   border-left-color: #D3D3D3;
 }
 
-#urwkjppubs .gt_caption {
+#cjkmkijpxo .gt_caption {
   padding-top: 4px;
   padding-bottom: 4px;
 }
 
-#urwkjppubs .gt_title {
+#cjkmkijpxo .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -1155,7 +1804,7 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   border-bottom-width: 0;
 }
 
-#urwkjppubs .gt_subtitle {
+#cjkmkijpxo .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -1167,7 +1816,7 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   border-top-width: 0;
 }
 
-#urwkjppubs .gt_heading {
+#cjkmkijpxo .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -1179,13 +1828,13 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   border-right-color: #D3D3D3;
 }
 
-#urwkjppubs .gt_bottom_border {
+#cjkmkijpxo .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#urwkjppubs .gt_col_headings {
+#cjkmkijpxo .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -1200,7 +1849,7 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   border-right-color: #D3D3D3;
 }
 
-#urwkjppubs .gt_col_heading {
+#cjkmkijpxo .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1220,7 +1869,7 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   overflow-x: hidden;
 }
 
-#urwkjppubs .gt_column_spanner_outer {
+#cjkmkijpxo .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1232,15 +1881,15 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   padding-right: 4px;
 }
 
-#urwkjppubs .gt_column_spanner_outer:first-child {
+#cjkmkijpxo .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#urwkjppubs .gt_column_spanner_outer:last-child {
+#cjkmkijpxo .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#urwkjppubs .gt_column_spanner {
+#cjkmkijpxo .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -1252,11 +1901,11 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   width: 100%;
 }
 
-#urwkjppubs .gt_spanner_row {
+#cjkmkijpxo .gt_spanner_row {
   border-bottom-style: hidden;
 }
 
-#urwkjppubs .gt_group_heading {
+#cjkmkijpxo .gt_group_heading {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1282,7 +1931,7 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   text-align: left;
 }
 
-#urwkjppubs .gt_empty_group_heading {
+#cjkmkijpxo .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -1297,15 +1946,15 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   vertical-align: middle;
 }
 
-#urwkjppubs .gt_from_md > :first-child {
+#cjkmkijpxo .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#urwkjppubs .gt_from_md > :last-child {
+#cjkmkijpxo .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#urwkjppubs .gt_row {
+#cjkmkijpxo .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1324,7 +1973,7 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   overflow-x: hidden;
 }
 
-#urwkjppubs .gt_stub {
+#cjkmkijpxo .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1337,7 +1986,7 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   padding-right: 5px;
 }
 
-#urwkjppubs .gt_stub_row_group {
+#cjkmkijpxo .gt_stub_row_group {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1351,15 +2000,15 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   vertical-align: top;
 }
 
-#urwkjppubs .gt_row_group_first td {
+#cjkmkijpxo .gt_row_group_first td {
   border-top-width: 2px;
 }
 
-#urwkjppubs .gt_row_group_first th {
+#cjkmkijpxo .gt_row_group_first th {
   border-top-width: 2px;
 }
 
-#urwkjppubs .gt_summary_row {
+#cjkmkijpxo .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1369,16 +2018,16 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   padding-right: 5px;
 }
 
-#urwkjppubs .gt_first_summary_row {
+#cjkmkijpxo .gt_first_summary_row {
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
-#urwkjppubs .gt_first_summary_row.thick {
+#cjkmkijpxo .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
-#urwkjppubs .gt_last_summary_row {
+#cjkmkijpxo .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1388,7 +2037,7 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   border-bottom-color: #D3D3D3;
 }
 
-#urwkjppubs .gt_grand_summary_row {
+#cjkmkijpxo .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1398,7 +2047,7 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   padding-right: 5px;
 }
 
-#urwkjppubs .gt_first_grand_summary_row {
+#cjkmkijpxo .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1408,7 +2057,7 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   border-top-color: #D3D3D3;
 }
 
-#urwkjppubs .gt_last_grand_summary_row_top {
+#cjkmkijpxo .gt_last_grand_summary_row_top {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1418,11 +2067,11 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   border-bottom-color: #D3D3D3;
 }
 
-#urwkjppubs .gt_striped {
+#cjkmkijpxo .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#urwkjppubs .gt_table_body {
+#cjkmkijpxo .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -1431,7 +2080,7 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   border-bottom-color: #D3D3D3;
 }
 
-#urwkjppubs .gt_footnotes {
+#cjkmkijpxo .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1445,7 +2094,7 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   border-right-color: #D3D3D3;
 }
 
-#urwkjppubs .gt_footnote {
+#cjkmkijpxo .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding-top: 4px;
@@ -1454,7 +2103,7 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   padding-right: 5px;
 }
 
-#urwkjppubs .gt_sourcenotes {
+#cjkmkijpxo .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1468,7 +2117,7 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   border-right-color: #D3D3D3;
 }
 
-#urwkjppubs .gt_sourcenote {
+#cjkmkijpxo .gt_sourcenote {
   font-size: 90%;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -1476,72 +2125,72 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   padding-right: 5px;
 }
 
-#urwkjppubs .gt_left {
+#cjkmkijpxo .gt_left {
   text-align: left;
 }
 
-#urwkjppubs .gt_center {
+#cjkmkijpxo .gt_center {
   text-align: center;
 }
 
-#urwkjppubs .gt_right {
+#cjkmkijpxo .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#urwkjppubs .gt_font_normal {
+#cjkmkijpxo .gt_font_normal {
   font-weight: normal;
 }
 
-#urwkjppubs .gt_font_bold {
+#cjkmkijpxo .gt_font_bold {
   font-weight: bold;
 }
 
-#urwkjppubs .gt_font_italic {
+#cjkmkijpxo .gt_font_italic {
   font-style: italic;
 }
 
-#urwkjppubs .gt_super {
+#cjkmkijpxo .gt_super {
   font-size: 65%;
 }
 
-#urwkjppubs .gt_footnote_marks {
+#cjkmkijpxo .gt_footnote_marks {
   font-size: 75%;
   vertical-align: 0.4em;
   position: initial;
 }
 
-#urwkjppubs .gt_asterisk {
+#cjkmkijpxo .gt_asterisk {
   font-size: 100%;
   vertical-align: 0;
 }
 
-#urwkjppubs .gt_indent_1 {
+#cjkmkijpxo .gt_indent_1 {
   text-indent: 5px;
 }
 
-#urwkjppubs .gt_indent_2 {
+#cjkmkijpxo .gt_indent_2 {
   text-indent: 10px;
 }
 
-#urwkjppubs .gt_indent_3 {
+#cjkmkijpxo .gt_indent_3 {
   text-indent: 15px;
 }
 
-#urwkjppubs .gt_indent_4 {
+#cjkmkijpxo .gt_indent_4 {
   text-indent: 20px;
 }
 
-#urwkjppubs .gt_indent_5 {
+#cjkmkijpxo .gt_indent_5 {
   text-indent: 25px;
 }
 
-#urwkjppubs .katex-display {
+#cjkmkijpxo .katex-display {
   display: inline-flex !important;
   margin-bottom: 0.75em !important;
 }
 
-#urwkjppubs div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#cjkmkijpxo div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
   height: 0px !important;
 }
 </style>
@@ -1731,60 +2380,6 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
 <h2>Approximating the Correlation Matrix</h2>
 
 <img data-src="images/cors.png" class="r-stretch"></section>
-<section id="data-generation" class="slide level2">
-<h2>Data Generation</h2>
-<div class="columns" style="font-size:60%">
-<div class="cell">
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a></a>tictoc<span class="sc">::</span><span class="fu">tic</span>()</span>
-<span id="cb14-2"><a></a>X <span class="ot">&lt;-</span> <span class="fu">rmatern_copula_folded_full</span>(<span class="at">n =</span> <span class="dv">100</span>, <span class="at">dim1 =</span> <span class="dv">400</span>, <span class="at">dim2 =</span> <span class="dv">180</span>, <span class="at">rho1 =</span> <span class="fl">0.8</span>, <span class="at">rho2 =</span> <span class="fl">0.9</span>, <span class="at">nu =</span> <span class="dv">2</span>)</span>
-<span id="cb14-3"><a></a>tictoc<span class="sc">::</span><span class="fu">toc</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>1.232 sec elapsed</code></pre>
-</div>
-</div><div class="column" style="width:50%;text-align:center;">
-<div class="cell">
-<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a></a><span class="fu">plot_matern</span>(X[, <span class="dv">1</span>], <span class="dv">400</span>, <span class="dv">180</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<div>
-<figure>
-<p><img data-src="index_files/figure-revealjs/unnamed-chunk-21-1.png" style="width:80.0%"></p>
-</figure>
-</div>
-</div>
-</div>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a></a><span class="fu">plot_matern</span>(X[, <span class="dv">2</span>], <span class="dv">400</span>, <span class="dv">180</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<div>
-<figure>
-<p><img data-src="index_files/figure-revealjs/unnamed-chunk-22-1.png" style="width:80.0%"></p>
-</figure>
-</div>
-</div>
-</div>
-</div><div class="column" style="width:50%;">
-<div class="cell">
-<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a></a><span class="fu">apply</span>(X, <span class="dv">1</span>, var) <span class="sc">|&gt;</span> <span class="fu">hist</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<div>
-<figure>
-<p><img data-src="index_files/figure-revealjs/unnamed-chunk-23-1.png" style="width:80.0%"></p>
-</figure>
-</div>
-</div>
-</div>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a></a><span class="fu">apply</span>(X, <span class="dv">1</span>, mean) <span class="sc">|&gt;</span> <span class="fu">hist</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<div>
-<figure>
-<p><img data-src="index_files/figure-revealjs/unnamed-chunk-24-1.png" style="width:80.0%"></p>
-</figure>
-</div>
-</div>
-</div>
-</div></div>
-</section>
 <section id="conclusion-and-future-work" class="slide level2" data-name="Conclusion">
 <h2>Conclusion and Future Work</h2>
 <div class="columns" style="font-size:60%">

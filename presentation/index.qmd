@@ -55,7 +55,7 @@ tibble(
 ```
 
 
-## Example {data-name="Copulas"}
+## Example 
 
 ```{r}
 #| echo: false
@@ -75,7 +75,7 @@ tibble(
   geom_line()
 ```
 
-## Example {data-name="Copulas"}
+## Example 
 
 ```{r}
 #| echo: TRUE
@@ -95,7 +95,7 @@ tibble(
   geom_line()
 ```
 
-## Example {data-name="Copulas"}
+## Example 
 
 ```{r}
 tibble(
@@ -124,7 +124,7 @@ tibble(
   facet_wrap(~variable, scales = "free_y")
 ```
 
-## Example {data-name="Copulas"}
+## Example 
 
 ```{r}
 #| echo: TRUE
@@ -163,7 +163,7 @@ tibble(
   facet_wrap(~variable, scales = "free_y")
 ```
 
-## What's going on? {data-name="Copulas" style="font-size:60%"}
+## What's going on? {style="font-size:60%"}
 
 
 * $y_t$ is marginally $\mathrm{GEV}(\mu, \sigma, \xi)$
@@ -186,7 +186,7 @@ $$
 
 * How to estimate all of this?
 
-## Copulas {data-name="Copulas"}
+## Copulas
 
 ::: {style="font-size:65%; margin-top:20px;"}
 
@@ -212,11 +212,11 @@ $$
 
 :::
 
-## Have no fear {data-name="Copulas"}
+## Have no fear
 
 ![](images/predator.jpg){fig-align="center"}
 
-## Stan Model {data-name="Copulas" style="font-size:60%"}
+## Stan Model {style="font-size:60%"}
 
 ::: {.columns}
 ::: {.column width=50%}
@@ -799,7 +799,7 @@ $$
 :::
 :::
 
-## Exact Stan Model {data-name="Results" style="font-size:60%"}
+## Exact Stan Model {style="font-size:60%"}
 
 ```{stan}
 #| echo: true
@@ -837,6 +837,46 @@ real matern_copula_exact_lpdf(matrix Z, int dim1, real rho1, int dim2, real rho2
 }
 ```
 
+## PSIS-LOO-CV {style="font-size:60%"}
+
+::: {.columns}
+::: {.column width="50%"}
+![](images/burkner.png)
+
+![](images/burkner2.png)
+:::
+
+::: {.column width="50%"}
+```{stan}
+#| echo: true
+#| eval: false
+#| output.var: psisloo_exact
+vector matern_cond_loglik(vector y, int dim1, real rho1, int dim2, real rho2, int nu) {
+  int D = dim1 * dim2;
+  tuple(matrix[dim1, dim1], vector[dim1]) E1 = ar1_precision_eigen(dim1, rho1);
+  tuple(matrix[dim2, dim2], vector[dim2]) E2 = ar1_precision_eigen(dim2, rho2);
+
+  vector[D] marginal_sds = marginal_sd(E1, E2, nu);
+  vector[D] g = rep_vector(0, D);
+  vector[D] tau_tilde = rep_vector(0, D);
+
+  for (i in 1:dim1) {
+    for (j in 1:dim2) {
+      vector[D] v = kronecker(E1.1[, i], E2.1[, j]);
+      v = v .* marginal_sds;
+      real norm_v = sqrt(sum(square(v)));
+      v /= norm_v;
+
+      real lambda = pow(E1.2[i] + E2.2[j], nu + 1) * square(norm_v);
+      
+      g += v * lambda * v' * y;
+      tau_tilde += square(v) * lambda;
+  }
+}
+```
+:::
+:::
+
 ## Approximation {style="font-size:50%"}
 
 ```{stan}
@@ -868,12 +908,12 @@ complex_matrix create_base_matrix_and_rescale_eigenvalues(int dim1, int dim2, re
   matrix[dim2, dim1] c = make_base_matrix(dim1, dim2, rho1, rho2);
 
   // Compute the eigenvalues and marginal standard deviation
-  complex_matrix[dim2, dim1] sqrt_eigs = pow(fft2(c), (nu + 1.0) / 2.0);
-  complex_matrix[dim2, dim1] inv_sqrt_eigs = pow(sqrt_eigs, -1);
-  real msd = get_real(inv_fft2(inv_sqrt_eigs)[1, 1]);
-  sqrt_eigs *= msd;
+  complex_matrix[dim2, dim1] eigs = pow(fft2(c), (nu + 1.0));
+  complex_matrix[dim2, dim1] inv_eigs = pow(eigs, -1);
+  real mvar = get_real(inv_fft2(inv_eigs)[1, 1]);
+  eigs *= mvar;
   
-  return sqrt_eigs;
+  return eigs;
 }
 ```
 
@@ -896,9 +936,161 @@ real matern_folded_copula_lpdf(matrix Z, int dim1, int dim2, real rho1, real rho
 }
 ```
 
+## Data Generation {data-name="Results"}
 
+::: {.columns style="font-size:60%"}
+```{r}
+#| echo: true
+#| cache: true
+tictoc::tic()
+X <- rmatern_copula_folded_full(n = 100, dim1 = 400, dim2 = 180, rho1 = 0.8, rho2 = 0.9, nu = 2)
+tictoc::toc()
+```
 
-## Benchmark: Density Computations
+::: {.column width="50%;text-align:center"}
+```{r}
+#| echo: true
+#| out-width: 80%
+plot_matern(X[, 1], 400, 180)
+```
+
+```{r}
+#| echo: true
+#| out-width: 80%
+plot_matern(X[, 2], 400, 180)
+```
+:::
+
+::: {.column width="50%"}
+```{r}
+#| echo: true
+#| out-width: 80%
+apply(X, 1, var) |> hist()
+```
+
+```{r}
+#| echo: true
+#| out-width: 80%
+apply(X, 1, mean) |> hist()
+```
+:::
+:::
+
+## Maximum Likelihood
+
+::: {.columns style="font-size:50%"}
+::: {.column width="60%"}
+**Setup**
+
+```{r}
+#| echo: true
+library(stdmatern)
+dim1 <- 50; dim2 <- 50
+rho1 <- 0.9; rho2 <- 0.5
+nu <- 1
+n_obs <- 5
+Z <- rmatern_copula_eigen(n_obs, dim1, dim2, rho1, rho2, nu)
+U <- pnorm(Z)
+Y <- qgev(U, loc = 6, scale = 2, shape = 0.1)
+```
+
+**Log-likelihood**
+
+```{r}
+#| echo: true
+log_lik <- function(par, Y) {
+  mu <- exp(par[1])
+  sigma <- exp(par[2] + par[1])
+  xi <- exp(par[3])
+  rho1 <- plogis(par[4])
+  rho2 <- plogis(par[5])
+  u <- evd::pgev(Y, loc = mu, scale = sigma, shape = xi)
+  z <- qnorm(u)
+  ll_marg <- sum(evd::dgev(Y, loc = mu, scale = sigma, shape = xi, log = TRUE))
+  ll_copula <- sum(dmatern_copula_eigen(z, dim1, dim2, rho1, rho2, nu))
+  ll_copula + ll_marg
+}
+```
+
+**Optimize**
+
+```{r}
+#| echo: true
+#| cache: true
+tictoc::tic()
+res <- optim(
+  par = c(0, 0, 0, 0, 0),
+  log_lik,
+  control = list(fnscale = -1),
+  Y = Y,
+  hessian = TRUE,
+  method = "L-BFGS-B"
+)
+tictoc::toc()
+```
+:::
+
+::: {.column width="40%"}
+<br> <br>
+
+**Results**
+
+```{r}
+#| echo: true
+se <- sqrt(diag(solve(-res$hessian)))
+ci <- res$par + c(-1.96, 1.96) * se
+```
+
+```{r}
+tibble(
+  par = c("mu_", "sigma_", "xi_", "rho_1", "rho_2"),
+  estimate = res$par,
+  se = se
+) |>
+  mutate(
+    lower = estimate - 1.96 * se,
+    upper = estimate + 1.96 * se
+  ) |>
+  select(-se) |>
+  pivot_longer(
+    cols = c(estimate, lower, upper),
+    names_to = "statistic",
+    values_to = "value"
+  ) |>
+  pivot_wider(names_from = par, values_from = value) |>
+  mutate(
+    mu_ = exp(mu_),
+    sigma_ = exp(sigma_) * mu_,
+    xi_ = exp(xi_),
+    rho_1 = plogis(rho_1),
+    rho_2 = plogis(rho_2)
+  ) |>
+  pivot_longer(cols = -statistic, names_to = "par", values_to = "value") |>
+  pivot_wider(names_from = statistic, values_from = value) |>
+  mutate(
+    par = str_c("<b>&", par, "</sub></b>") |>
+      str_replace("_", ";<sub>")
+  ) |>
+  gt() |>
+  fmt_markdown(columns = par) |>
+  fmt_number(decimals = 3) |>
+  cols_label(
+    par = "",
+    estimate = "Estimate",
+    lower = "Lower",
+    upper = "Upper"
+  ) |>
+  tab_spanner(
+    label = "95% CI",
+    columns = c(lower, upper)
+  )  |> 
+  tab_options(table.width = pct(100)) |> 
+  opt_row_striping(TRUE)
+```
+:::
+:::
+
+## Benchmark: Density Computations 
 
 ```{r}
 read_csv(here::here("presentation", "data", "benchmark_all.csv")) |> 
@@ -947,45 +1139,7 @@ read_csv(here::here("presentation", "data", "benchmark_all.csv")) |>
 
 ![](images/cors.png)
 
-## Data Generation
 
-::: {.columns style="font-size:60%"}
-```{r}
-#| echo: true
-#| cache: true
-tictoc::tic()
-X <- rmatern_copula_folded_full(n = 100, dim1 = 400, dim2 = 180, rho1 = 0.8, rho2 = 0.9, nu = 2)
-tictoc::toc()
-```
-
-::: {.column width="50%;text-align:center"}
-```{r}
-#| echo: true
-#| out-width: 80%
-plot_matern(X[, 1], 400, 180)
-```
-
-```{r}
-#| echo: true
-#| out-width: 80%
-plot_matern(X[, 2], 400, 180)
-```
-:::
-
-::: {.column width="50%"}
-```{r}
-#| echo: true
-#| out-width: 80%
-apply(X, 1, var) |> hist()
-```
-
-```{r}
-#| echo: true
-#| out-width: 80%
-apply(X, 1, mean) |> hist()
-```
-:::
-:::
 
 ## Conclusion and Future Work {data-name="Conclusion"}
 
