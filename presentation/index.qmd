@@ -438,40 +438,16 @@ $$
 :::
 :::
 
-## From Parameter-level to Data-level Dependence
+## Leftover Data-level Dependence
 
-::: {.columns style="font-size:60%"}
+::: {.columns}
 ::: {.column width="50%"}
-### Parameter-level Dependence
-
--   Assumes conditional independence
--   Biased joint probability estimates
--   Underestimates parameter variance
+![](images/copula_estimate_spatial.png)
 :::
-
 ::: {.column width="50%"}
-### Copula
-
--   Improves joint probabilities
--   Enhances spatial risk assessment
--   Better variance estimates
+![](images/copula_estimate_mean.png)
 :::
-:::
-
-::: {style="font-size:65%; margin-top:20px;"}
-**Sklar's Theorem**: For any multivariate distribution $H$, there exists a unique copula $C$ such that:
-
-$$
-H(\mathbf x) = C(F_1(x_1), \dots, F_d(x_d))
-$$
-
-where $F_i$ are marginal distributions. We can also write this as a density
-
-$$
-h(x) = c(F_1(x_1), \dots, F_d(x_d)) \prod_{i=1}^d f_i(x_i)
-$$
-
-:::
+::: 
 
 ## Our Approach: Matérn-like Gaussian Copula
 

@@ -91,11 +91,11 @@
     "text": "Spatial Modeling on Parameter-level [9]\n\n\n\n\\(\\mu\\): location parameter\n\n\\(\\mu = \\mu_0 \\left(1 + \\Delta \\left(t - t_0\\right)\\right)\\)\n\n\\(\\sigma\\): scale parameter\n\\(\\xi\\): shape parameter \\[\n\\begin{aligned}\n\\log(\\mu_0) = \\psi &\\sim \\mathrm{BYM2}(\\mu_\\psi, \\rho_\\psi, \\sigma_\\psi) \\\\\n\\log(\\mu_0) - \\log(\\sigma) = \\tau &\\sim \\mathrm{BYM2}(\\mu_\\tau, \\rho_\\tau, \\sigma_\\tau) \\\\\nf_\\xi(\\xi) = \\phi &\\sim \\mathrm{BYM2}(\\mu_\\phi, \\rho_\\phi, \\sigma_\\phi) \\\\\nf_\\Delta(\\Delta) = \\gamma &\\sim \\mathrm{BYM2}(\\mu_\\gamma, \\rho_\\gamma, \\sigma_\\gamma)\n\\end{aligned}\n\\]"
   },
   {
-    "objectID": "presentation/index.html#from-parameter-level-to-data-level-dependence",
-    "href": "presentation/index.html#from-parameter-level-to-data-level-dependence",
+    "objectID": "presentation/index.html#leftover-data-level-dependence",
+    "href": "presentation/index.html#leftover-data-level-dependence",
     "title": "Gaussian Copulas for Large Spatial Fields",
-    "section": "From Parameter-level to Data-level Dependence",
-    "text": "From Parameter-level to Data-level Dependence\n\n\nParameter-level Dependence\n\nAssumes conditional independence\nBiased joint probability estimates\nUnderestimates parameter variance\n\n\nCopula\n\nImproves joint probabilities\nEnhances spatial risk assessment\nBetter variance estimates\n\n\n\nSklar’s Theorem: For any multivariate distribution \\(H\\), there exists a unique copula \\(C\\) such that:\n\\[\nH(\\mathbf x) = C(F_1(x_1), \\dots, F_d(x_d))\n\\]\nwhere \\(F_i\\) are marginal distributions. We can also write this as a density\n\\[\nh(x) = c(F_1(x_1), \\dots, F_d(x_d)) \\prod_{i=1}^d f_i(x_i)\n\\]"
+    "section": "Leftover Data-level Dependence",
+    "text": "Leftover Data-level Dependence"
   },
   {
     "objectID": "presentation/index.html#our-approach-matérn-like-gaussian-copula",

@@ -709,34 +709,14 @@ f_\Delta(\Delta) = \gamma &amp;\sim \mathrm{BYM2}(\mu_\gamma, \rho_\gamma, \sigm
 <p><img data-src="images/facet_constrained.png"></p>
 </div></div>
 </section>
-<section id="from-parameter-level-to-data-level-dependence" class="slide level2">
-<h2>From Parameter-level to Data-level Dependence</h2>
-<div class="columns" style="font-size:60%">
+<section id="leftover-data-level-dependence" class="slide level2">
+<h2>Leftover Data-level Dependence</h2>
+<div class="columns">
 <div class="column" style="width:50%;">
-<h3 id="parameter-level-dependence">Parameter-level Dependence</h3>
-<ul>
-<li>Assumes conditional independence</li>
-<li>Biased joint probability estimates</li>
-<li>Underestimates parameter variance</li>
-</ul>
+<p><img data-src="images/copula_estimate_spatial.png"></p>
 </div><div class="column" style="width:50%;">
-<h3 id="copula">Copula</h3>
-<ul>
-<li>Improves joint probabilities</li>
-<li>Enhances spatial risk assessment</li>
-<li>Better variance estimates</li>
-</ul>
+<p><img data-src="images/copula_estimate_mean.png"></p>
 </div></div>
-<div style="font-size:65%; margin-top:20px;">
-<p><strong>Sklar’s Theorem</strong>: For any multivariate distribution <span class="math inline">\(H\)</span>, there exists a unique copula <span class="math inline">\(C\)</span> such that:</p>
-<p><span class="math display">\[
-H(\mathbf x) = C(F_1(x_1), \dots, F_d(x_d))
-\]</span></p>
-<p>where <span class="math inline">\(F_i\)</span> are marginal distributions. We can also write this as a density</p>
-<p><span class="math display">\[
-h(x) = c(F_1(x_1), \dots, F_d(x_d)) \prod_{i=1}^d f_i(x_i)
-\]</span></p>
-</div>
 </section>
 <section id="our-approach-matérn-like-gaussian-copula" class="slide level2">
 <h2>Our Approach: Matérn-like Gaussian Copula</h2>
