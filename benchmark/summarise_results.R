@@ -7,15 +7,100 @@ library(scales)
 library(ggh4x)
 theme_set(bggjphd::theme_bggj())
 
-d <- here("benchmarks", "gev_margins", "results") |>
+d <- here("benchmark", "results") |>
   open_dataset() |>
-  collect() |>
-  filter(
-    all(rhat < 1.1),
-    .by = iter
-  )
+  collect()
 
-d
+d |>
+  distinct(iter, n_obs, dim1) |>
+  arrange(desc(iter))
+
+d |>
+  mutate(
+    rho1 = value[variable == "rho[1]"] |> max(),
+    rho2 = value[variable == "rho[2]"] |> max(),
+    rho_mean = (rho1 + rho2) / 2,
+    .by = c(iter)
+  ) |>
+  filter(
+    variable == "log_lik"
+  ) |>
+  mutate(
+    mean_ll = median / (n_obs * dim1 * dim2),
+  ) |>
+  select(
+    iter, model, mean_ll, rho1, rho2, rho_mean, nu, dim1
+  ) |>
+  arrange(iter) |>
+  ggplot(aes(rho_mean, mean_ll, col = model, fill = model)) +
+  geom_smooth() +
+  scale_fill_brewer(palette = "Set1") +
+  scale_colour_brewer(palette = "Set1") +
+  facet_grid(cols = vars(nu), rows = vars(dim1))
+
+d |>
+  mutate(
+    rho1 = value[variable == "rho[1]"] |> max(),
+    rho2 = value[variable == "rho[2]"] |> max(),
+    rho_mean = (rho1 + rho2) / 2,
+    .by = c(iter)
+  ) |>
+  filter(
+    variable == "log_lik"
+  ) |>
+  mutate(
+    mean_ll = median / (n_obs * dim1 * dim2),
+  ) |>
+  select(
+    iter, model, mean_ll, rho1, rho2, rho_mean, nu, dim1
+  ) |>
+  arrange(iter) |>
+  pivot_wider(names_from = model, values_from = mean_ll) |>
+  mutate(
+    diff = exact - iid,
+    nu = factor(nu)
+  ) |>
+  ggplot(aes(rho_mean, diff, col = nu, fill = nu, group = nu)) +
+  geom_hline(yintercept = 0, lty = 2) +
+  geom_smooth() +
+  scale_fill_brewer(palette = "Set1") +
+  scale_colour_brewer(palette = "Set1") +
+  facet_grid(cols = vars(nu), rows = vars(dim1))
+
+d |>
+  mutate(
+    rho1 = value[variable == "rho[1]"] |> max(),
+    rho2 = value[variable == "rho[2]"] |> max(),
+    .by = c(iter)
+  ) |>
+  filter(
+    variable == "log_lik"
+  ) |>
+  mutate(
+    mean_ll = median / (n_obs * dim1 * dim2),
+  ) |>
+  select(
+    iter, model, mean_ll, rho1, rho2, nu
+  ) |>
+  arrange(iter) |>
+  pivot_wider(names_from = model, values_from = mean_ll) |>
+  mutate(
+    diff = exact - iid
+  ) |>
+  drop_na(diff) |>
+  ggplot(aes(rho1, rho2, fill = diff)) +
+  geom_raster(
+    interpolate = TRUE
+  ) +
+  scale_x_continuous(
+    limits = c(0, 1),
+    expand = expansion(0)
+  ) +
+  scale_y_continuous(
+    limits = c(0, 1),
+    expand = expansion(0)
+  ) +
+  scale_fill_distiller(palette = "Spectral", direction = -1)
 
 d |>
   select(iter, model, time, n_obs, dim1, dim2, nu) |>
@@ -24,11 +109,11 @@ d |>
   mutate(
     grid_size = dim1 * dim2,
     time_obs = time / n_obs,
-    model = str_to_title(model) |> 
+    model = str_to_title(model) |>
       fct_relevel("Exact")
-  ) |> 
-  ggplot(aes(grid_size, time_obs, color = model, fill = model)) +
-  geom_smooth() +
+  ) |>
+  ggplot(aes(grid_size, time_obs, color = model, fill = model, group = model)) +
+  geom_smooth(method = "lm") +
   geom_point() +
   scale_x_continuous(
     trans = "log10",
@@ -64,11 +149,6 @@ d |>
     col = NULL
   )
 
-ggsave(
-  here("benchmarks", "gev_margins", "figures", "speed_plot.png"),
-  scale = 1.4, width = 8, height = 0.621 * 8
-)
-
 d |>
   select(iter, model, time, n_obs, dim1, dim2, nu) |>
   distinct() |>
@@ -77,15 +157,12 @@ d |>
     grid_size = dim1 * dim2
   ) |>
   pivot_wider(names_from = model, values_from = time) |>
-  pivot_longer(c(circulant, folded)) |>
   mutate(
-    diff = value / exact,
-    name = str_to_title(name)
+    diff = exact / iid
   ) |>
-  ggplot(aes(grid_size, diff, color = name, fill = name)) +
+  ggplot(aes(grid_size, diff)) +
   geom_hline(yintercept = 1, lty = 2) +
-  geom_smooth() +
-  geom_point() +
+  geom_smooth(method = "lm") +
   scale_x_continuous(
     trans = "log10",
     breaks = breaks_log(6),
@@ -93,7 +170,7 @@ d |>
   ) +
   scale_y_continuous(
     trans = "log10",
-    labels = \(x) scales::percent(x - 1),
+    labels = \(x) scales::number(x - 1, suffix = "x"),
     breaks = breaks_log(8),
     guide = guide_axis_logticks()
   ) +
@@ -103,7 +180,7 @@ d |>
   scale_fill_brewer(
     palette = "Set1"
   ) +
-  facet_wrap("nu", labeller = label_both) +
+  # facet_wrap("nu", labeller = label_both) +
   theme(
     legend.position = "top",
     plot.margin = margin(t = 5, r = 15, b = 5, l = 15)
@@ -174,11 +251,11 @@ d |>
     label = md("$\\rho_2$"),
     columns = 10:11
   ) |>
-  fmt_number(decimals = 3) 
+  fmt_number(decimals = 3)
 
 
-d |> 
-  select(iter, model, variable, median, value) |> 
+d |>
+  select(iter, model, variable, median, value) |>
   mutate(
     err = value / median,
     model = fct_relevel(
@@ -186,12 +263,12 @@ d |>
       "folded",
       "circulant",
       "exact"
-      ) |> 
+    ) |>
       fct_recode(
-      "Folded" = "folded",
-      "Circulant" = "circulant",
-      "Exact" = "exact"
-    ),
+        "Folded" = "folded",
+        "Circulant" = "circulant",
+        "Exact" = "exact"
+      ),
     variable = fct_relevel(
       variable,
       "rho[2]",
@@ -200,15 +277,15 @@ d |>
       "sigma",
       "mu"
     )
-  ) |> 
-  drop_na() |> 
+  ) |>
+  drop_na() |>
   reframe(
     p = seq(0.025, 0.475, 0.025),
     size = 1 - 2 * p,
     lower = quantile(err, p),
     upper = quantile(err, 1 - p),
     .by = c(model, variable)
-  ) |> 
+  ) |>
   ggplot() +
   geom_vline(xintercept = 1, lty = 2) +
   geom_segment(
@@ -257,11 +334,11 @@ ggsave(
   scale = 1.4, width = 8, height = 0.4 * 8
 )
 
-d |> 
+d |>
   filter(
     rhat < 1.1
-  ) |> 
-  select(iter, model, variable, median, value) |> 
+  ) |>
+  select(iter, model, variable, median, value) |>
   mutate(
     err = value - median,
     model = fct_relevel(
@@ -269,12 +346,12 @@ d |>
       "folded",
       "circulant",
       "exact"
-      ) |> 
+    ) |>
       fct_recode(
-      "Folded" = "folded",
-      "Circulant" = "circulant",
-      "Exact" = "exact"
-    ),
+        "Folded" = "folded",
+        "Circulant" = "circulant",
+        "Exact" = "exact"
+      ),
     variable = fct_relevel(
       variable,
       "rho[2]",
@@ -283,15 +360,15 @@ d |>
       "sigma",
       "mu"
     )
-  ) |> 
-  drop_na() |> 
+  ) |>
+  drop_na() |>
   reframe(
     p = seq(0.025, 0.475, 0.025),
     size = 1 - 2 * p,
     lower = quantile(err, p),
     upper = quantile(err, 1 - p),
     .by = c(model, variable)
-  ) |> 
+  ) |>
   ggplot() +
   geom_vline(xintercept = 0, lty = 2) +
   geom_segment(
@@ -333,7 +410,7 @@ d |>
     title = "Do the approximations capture the true parameters well enough?"
   )
 
-  ggsave(
-    here("benchmarks", "gev_margins", "figures", "estimate_comparison_linear.png"),
-    scale = 1.4, width = 8, height = 0.4 * 8
-  )
+ggsave(
+  here("benchmarks", "gev_margins", "figures", "estimate_comparison_linear.png"),
+  scale = 1.4, width = 8, height = 0.4 * 8
+)

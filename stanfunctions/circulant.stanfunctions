@@ -96,12 +96,17 @@ vector matvec_prod(complex_matrix sqrt_eigs, vector v) {
 
   @return The log probability density
 */
-real matern_circulant_copula_lpdf(vector Z, complex_matrix sqrt_eigs) {
-  int dim1 = cols(sqrt_eigs);
-  int dim2 = rows(sqrt_eigs);
-  vector[dim1 * dim2] y = matvec_prod(sqrt_eigs, Z);
-  return - (dot_self(y) - sum(log(get_real(sqrt_eigs))) - dot_self(Z)) / 2.0;
-}
+real matern_circulant_copula_lpdf(matrix Z, int dim1, int dim2, real rho1, real rho2, int nu) {
+    int n_obs = cols(Z);
+    complex_matrix[2 * dim2, 2 * dim1] eigs = create_base_matrix_and_rescale_eigenvalues(2 * dim1, 2 * dim2, rho1, rho2, nu);
+    real quad_forms = 0;
+    real log_det = sum(log(get_real(eigs)));
+    for (i in 1:n_obs) {
+      vector[4 * dim1 * dim2] Qz = matvec_prod(eigs, Z[ , i]);
+      quad_forms += dot_product(Z[ , i], Qz) - dot_self(Z[ , i]);
+    } 
+    return - 0.5 * (quad_forms - n_obs * log_det);
+  }
 
 /*
   Computes the log probability density of a Matérn distribution that's approximated

@@ -11,7 +11,7 @@
   <meta name="generator" content="quarto-1.5.57">
 
   <meta name="author" content="Brynjólfur Gauti Guðrúnar Jónsson">
-  <title>Copulas in Stan</title>
+  <title>Gaussian Copulas for Large Spatial Fields</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
@@ -412,8 +412,8 @@
     <div class="slides">
 
 <section id="title-slide" class="quarto-title-block center">
-  <h1 class="title">Copulas in Stan</h1>
-  <p class="subtitle">Data-Level Dependence in Generalized Extreme Value Distributions</p>
+  <h1 class="title">Gaussian Copulas for Large Spatial Fields</h1>
+  <p class="subtitle">Modeling Data-Level Spatial Dependence in Multivariate Generalized Extreme Value Distributions</p>
 
 <div class="quarto-title-authors">
 <div class="quarto-title-author">
@@ -426,6 +426,145 @@ Brynjólfur Gauti Guðrúnar Jónsson
     </div>
 </div>
 
+</section>
+<section id="example" class="slide level2" data-name="Copulas">
+<h2>Example</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a></a>Q <span class="ot">&lt;-</span> <span class="fu">make_AR_prec_matrix</span>(<span class="at">dim =</span> <span class="dv">60</span>, <span class="at">rho =</span> <span class="fl">0.9</span>)</span>
+<span id="cb1-2"><a></a>Z <span class="ot">&lt;-</span> <span class="fu">rmvn.sparse</span>(<span class="at">n =</span> <span class="dv">1</span>, <span class="at">mu =</span> <span class="fu">rep</span>(<span class="dv">0</span>, <span class="fu">nrow</span>(Q)), <span class="at">CH =</span> <span class="fu">Cholesky</span>(Q)) <span class="sc">|&gt;</span> </span>
+<span id="cb1-3"><a></a>  <span class="fu">as.numeric</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+
+<img data-src="index_files/figure-revealjs/unnamed-chunk-2-1.png" width="960" class="r-stretch"></section>
+<section id="example-1" class="slide level2" data-name="Copulas">
+<h2>Example</h2>
+
+<img data-src="index_files/figure-revealjs/unnamed-chunk-4-1.png" width="960" class="r-stretch"></section>
+<section id="example-2" class="slide level2" data-name="Copulas">
+<h2>Example</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a></a>U <span class="ot">&lt;-</span> <span class="fu">pnorm</span>(Z)</span>
+<span id="cb2-2"><a></a>Y <span class="ot">&lt;-</span> <span class="fu">qgev</span>(U, <span class="at">loc =</span> <span class="dv">10</span>, <span class="at">scale =</span> <span class="dv">5</span>, <span class="at">shape =</span> <span class="fl">0.1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+
+<img data-src="index_files/figure-revealjs/unnamed-chunk-6-1.png" width="960" class="r-stretch"></section>
+<section id="example-3" class="slide level2" data-name="Copulas">
+<h2>Example</h2>
+
+<img data-src="index_files/figure-revealjs/unnamed-chunk-7-1.png" width="960" class="r-stretch"></section>
+<section id="example-4" class="slide level2" data-name="Copulas">
+<h2>Example</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a></a>Q <span class="ot">&lt;-</span> <span class="fu">make_AR_prec_matrix</span>(<span class="at">dim =</span> <span class="dv">60</span>, <span class="at">rho =</span> <span class="sc">-</span><span class="fl">0.8</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+
+<img data-src="index_files/figure-revealjs/unnamed-chunk-9-1.png" width="960" class="r-stretch"></section>
+<section id="whats-going-on" class="slide level2" data-name="Copulas" style="font-size:60%">
+<h2>What’s going on?</h2>
+<ul>
+<li><span class="math inline">\(y_t\)</span> is marginally <span class="math inline">\(\mathrm{GEV}(\mu, \sigma, \xi)\)</span></li>
+</ul>
+<div style="font-size:80%">
+<p><span class="math display">\[
+\log f(y_t \vert \mu, \sigma, \xi) = - n\log\sigma - (1 + \frac{1}{\xi}) \sum_{i=1}^{n}{\log\left(1 + \xi\left[\frac{z_i - \mu}{\sigma} \right]\right)} - \sum_{i=1}^{n}{\left(1 + \xi \left[ \frac{z_i - \mu}{\sigma} \right]\right)}^{-1/\xi}
+\]</span></p>
+</div>
+<ul>
+<li><span class="math inline">\(\mathbf Y\)</span> has a Gaussian AR(1) copula</li>
+</ul>
+<p><span class="math display">\[
+\begin{aligned}
+\log c(\mathbf{u}) &amp;\propto \frac{1}{2}\log|\mathbf{Q}| - \frac{1}{2}\mathbf{z}^T\mathbf{Q}\mathbf{z} + \frac{1}{2}\mathbf{z}^T\mathbf{z} \\
+u_t &amp;= F_{\mathrm{GEV}}(y_t \vert \mu, \sigma, \xi) \\
+z_t &amp;= \Phi^{-1}(u_t)
+\end{aligned}
+\]</span></p>
+<ul>
+<li>How to estimate all of this?</li>
+</ul>
+</section>
+<section id="copulas" class="slide level2" data-name="Copulas">
+<h2>Copulas</h2>
+<div style="font-size:65%; margin-top:20px;">
+<p><strong>Sklar’s Theorem</strong>: For any multivariate distribution <span class="math inline">\(H\)</span>, there exists a unique copula <span class="math inline">\(C\)</span> such that:</p>
+<p><span class="math display">\[
+H(\mathbf x) = C(F_1(x_1), \dots, F_d(x_d))
+\]</span></p>
+<p>where <span class="math inline">\(F_i\)</span> are marginal distributions.</p>
+<hr>
+<p>We can also write this as a (log) density</p>
+<p><span class="math display">\[
+\begin{aligned}
+h(x) &amp;= c(F_1(x_1), \dots, F_d(x_d)) \prod_{i=1}^d f_i(x_i) \\
+\log h(\mathbf x) &amp;= \log c\left(F_1(x_1), \dots, F_d(x_d)\right) + \sum_{i=1}^d \log f_i(x_i)
+\end{aligned}
+\]</span></p>
+</div>
+</section>
+<section id="have-no-fear" class="slide level2" data-name="Copulas">
+<h2>Have no fear</h2>
+
+<img data-src="images/predator.jpg" class="quarto-figure quarto-figure-center r-stretch"></section>
+<section id="stan-model" class="slide level2" data-name="Copulas" style="font-size:60%">
+<h2>Stan Model</h2>
+<div class="columns">
+<div class="column" style="width:50%;">
+<div class="cell" data-output.var="ar1_gev1">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource stan number-lines code-with-copy"><code class="sourceCode stan"><span id="cb4-1"><a></a><span class="kw">data</span> {</span>
+<span id="cb4-2"><a></a>  <span class="dt">int</span> n_obs;</span>
+<span id="cb4-3"><a></a>  <span class="dt">vector</span>[n_obs] y;</span>
+<span id="cb4-4"><a></a>}</span>
+<span id="cb4-5"><a></a></span>
+<span id="cb4-6"><a></a><span class="kw">transformed data</span> {</span>
+<span id="cb4-7"><a></a>  <span class="dt">real</span> min_y = min(y);</span>
+<span id="cb4-8"><a></a>}</span>
+<span id="cb4-9"><a></a></span>
+<span id="cb4-10"><a></a><span class="kw">parameters</span> {</span>
+<span id="cb4-11"><a></a>  <span class="dt">real</span>&lt;<span class="kw">lower</span> = -<span class="dv">1</span>, <span class="kw">upper</span> = <span class="dv">1</span>&gt; rho;</span>
+<span id="cb4-12"><a></a>  <span class="dt">real</span>&lt;<span class="kw">lower</span> = <span class="dv">0</span>&gt; sigma;</span>
+<span id="cb4-13"><a></a>  <span class="dt">real</span>&lt;<span class="kw">lower</span> = <span class="dv">0</span>&gt; xi;</span>
+<span id="cb4-14"><a></a>  <span class="dt">real</span>&lt;<span class="kw">lower</span> = <span class="dv">0</span>, <span class="kw">upper</span> = min_y + sigma / xi&gt; mu;</span>
+<span id="cb4-15"><a></a>}</span>
+<span id="cb4-16"><a></a></span>
+<span id="cb4-17"><a></a><span class="kw">model</span> {</span>
+<span id="cb4-18"><a></a>  <span class="dt">vector</span>[n_obs] U;</span>
+<span id="cb4-19"><a></a>  <span class="kw">target +=</span> gev_lpdf(y | mu, sigma, xi);</span>
+<span id="cb4-20"><a></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span>:n_obs) {</span>
+<span id="cb4-21"><a></a>    U[i] = gev_cdf(y[i] | mu, sigma, xi);</span>
+<span id="cb4-22"><a></a>  }</span>
+<span id="cb4-23"><a></a>  <span class="kw">target +=</span> normal_copula_ar1_lpdf(U | rho);</span>
+<span id="cb4-24"><a></a></span>
+<span id="cb4-25"><a></a>  <span class="co">// Priors</span></span>
+<span id="cb4-26"><a></a>  <span class="kw">target +=</span> std_normal_lpdf(rho);</span>
+<span id="cb4-27"><a></a>  <span class="kw">target +=</span> exponential_lpdf(sigma | <span class="dv">1</span>);</span>
+<span id="cb4-28"><a></a>  <span class="kw">target +=</span> exponential_lpdf(xi | <span class="dv">1</span>);</span>
+<span id="cb4-29"><a></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div><div class="column" style="width:50%;">
+<div class="cell" data-output.var="ar1_">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource stan number-lines code-with-copy"><code class="sourceCode stan"><span id="cb5-1"><a></a><span class="dt">real</span> normal_ar1_lpdf(<span class="dt">vector</span> x, <span class="dt">real</span> rho) {</span>
+<span id="cb5-2"><a></a>  <span class="dt">int</span> N = num_elements(x);</span>
+<span id="cb5-3"><a></a>  <span class="dt">real</span> out;</span>
+<span id="cb5-4"><a></a>  <span class="dt">real</span> log_det = - (N - <span class="dv">1</span>) * (log(<span class="dv">1</span> + rho) + log(<span class="dv">1</span> - rho)) / <span class="dv">2</span>;</span>
+<span id="cb5-5"><a></a>  <span class="dt">vector</span>[N] q;</span>
+<span id="cb5-6"><a></a>  <span class="dt">real</span> scl = sqrt(<span class="dv">1</span> / (<span class="dv">1</span> - rho^<span class="dv">2</span>));</span>
+<span id="cb5-7"><a></a>  </span>
+<span id="cb5-8"><a></a>  q[<span class="dv">1</span>:(N - <span class="dv">1</span>)] = scl * (x[<span class="dv">1</span>:(N - <span class="dv">1</span>)] - rho * x[<span class="dv">2</span>:N]);</span>
+<span id="cb5-9"><a></a>  q[N] = x[N];</span>
+<span id="cb5-10"><a></a>  </span>
+<span id="cb5-11"><a></a>  out = log_det - dot_self(q) / <span class="dv">2</span>;</span>
+<span id="cb5-12"><a></a>  </span>
+<span id="cb5-13"><a></a>  <span class="cf">return</span> out;</span>
+<span id="cb5-14"><a></a>}</span>
+<span id="cb5-15"><a></a></span>
+<span id="cb5-16"><a></a><span class="dt">real</span> normal_copula_ar1_lpdf(<span class="dt">vector</span> U, <span class="dt">real</span> rho) {</span>
+<span id="cb5-17"><a></a>  <span class="dt">int</span> N = rows(U);</span>
+<span id="cb5-18"><a></a>  <span class="dt">vector</span>[N] Z = inv_Phi(U);</span>
+<span id="cb5-19"><a></a>  <span class="cf">return</span> normal_ar1_lpdf(Z | rho) + dot_self(Z) / <span class="dv">2</span>;</span>
+<span id="cb5-20"><a></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p><img data-src="images/stanfit1.png"></p>
+</div></div>
 </section>
 <section id="introduction" class="slide level2" data-name="Background">
 <h2>Introduction</h2>
@@ -531,7 +670,7 @@ Brynjólfur Gauti Guðrúnar Jónsson
 <hr>
 <div class="columns">
 <div class="column" style="width:50%;">
-<h4 id="bym2-model-riebler2016-simpson2015">BYM2 Model <span class="citation" data-cites="riebler2016 simpson2015">[<a href="#/references" role="doc-biblioref" onclick="">7</a>–&nbsp; <a href="#/references" role="doc-biblioref" onclick="">8</a>]</span></h4>
+<h4 id="bym2-model-riebler2016-simpson2015">BYM2 Model <span class="citation" data-cites="riebler2016 simpson2015">[<a href="#/references" role="doc-biblioref" onclick="">7</a>–<a href="#/references" role="doc-biblioref" onclick="">8</a>]</span></h4>
 <ul>
 <li><span class="math inline">\(\rho\)</span> models how much of variance is spatial</li>
 <li><span class="math inline">\(s\)</span> is a scaling factor chosen to make <span class="math inline">\(\mathrm{Var}(\mathbf u_i) \approx 1\)</span></li>
@@ -547,8 +686,8 @@ Brynjólfur Gauti Guðrúnar Jónsson
 </div></div>
 </div>
 </section>
-<section id="spatial-modeling-on-parameter-level" class="slide level2">
-<h2>Spatial Modeling on Parameter-level</h2>
+<section id="spatial-modeling-on-parameter-level-morris2019" class="slide level2">
+<h2>Spatial Modeling on Parameter-level <span class="citation" data-cites="morris2019">[<a href="#/references" role="doc-biblioref" onclick="">9</a>]</span></h2>
 <div class="columns" style="font-size:50%">
 <div class="column" style="width:45%;">
 <ul>
@@ -629,9 +768,10 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
 <h3 id="gaussian-copula">Gaussian Copula</h3>
 <div class="column" style="width:50%;">
 <ul>
-<li>Matérn-like precision matrix <span class="math inline">\(\mathbf{Q}\)</span> <span class="citation" data-cites="lindgren2011">[<a href="#/references" role="doc-biblioref" onclick="">9</a>]</span></li>
-<li>Scaled so <span class="math inline">\(\boldsymbol{\Sigma} = \mathbf{Q}^{-1}\)</span> is correlation matrix</li>
+<li>Matérn-like precision matrix <span class="math inline">\(\mathbf{Q}\)</span> <span class="citation" data-cites="lindgren2011">[<a href="#/references" role="doc-biblioref" onclick="">10</a>]</span></li>
 <li>If <span class="math inline">\(\mathbf{Q} = \mathbf{I}\)</span> simplifies to independent margins</li>
+<li>Scaled so <span class="math inline">\(\boldsymbol{\Sigma} = \mathbf{Q}^{-1}\)</span> is correlation matrix</li>
+<li>Need to calculate marginal variances <span class="citation" data-cites="rue2005a rue2007 rue2009">[<a href="#/references" role="doc-biblioref" onclick="">11</a>–<a href="#/references" role="doc-biblioref" onclick="">13</a>]</span></li>
 <li>How to generate, scale and compute with <span class="math inline">\(\mathbf{Q}\)</span> quickly (for MCMC)?</li>
 </ul>
 </div><div class="column" style="width:50%;">
@@ -647,7 +787,7 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
 <section id="the-precision-matrix" class="slide level2" data-name="Methods">
 <h2>The Precision Matrix</h2>
 <div style="font-size:60%">
-<p><span class="math inline">\(\mathbf Q\)</span> defined as Kronecker sum of two AR(1) precision matrices, similar to <span class="citation" data-cites="lindgren2011">[<a href="#/references" role="doc-biblioref" onclick="">9</a>]</span></p>
+<p><span class="math inline">\(\mathbf Q\)</span> defined as Kronecker sum of two AR(1) precision matrices, similar to <span class="citation" data-cites="lindgren2011">[<a href="#/references" role="doc-biblioref" onclick="">10</a>]</span></p>
 <p><span class="math display">\[
 \mathbf{Q} = \left( \mathbf{Q}_{\rho_1} \otimes \mathbf{I_{n_2}} + \mathbf{I_{n_1}} \otimes \mathbf{Q}_{\rho_2} \right)^{\nu + 1}, \quad \nu \in \{0, 1, 2\}
 \]</span></p>
@@ -688,7 +828,7 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
 <section id="eigendecomposition" class="slide level2">
 <h2>Eigendecomposition</h2>
 <div class="columns" style="font-size:65%">
-<p>Because of how <span class="math inline">\(\mathbf{Q}\)</span> is defined <span class="citation" data-cites="horn1991">[<a href="#/references" role="doc-biblioref" onclick="">10</a>]</span>, we know that</p><p><span class="math display">\[
+<p>Because of how <span class="math inline">\(\mathbf{Q}\)</span> is defined <span class="citation" data-cites="horn1991">[<a href="#/references" role="doc-biblioref" onclick="">14</a>]</span>, we know that</p><p><span class="math display">\[
 \begin{aligned}
 \mathbf{Q} &amp;= \mathbf{V}\boldsymbol{\Lambda}\mathbf{V} \\
 &amp;= (\mathbf{V_{\rho_1}} \otimes \mathbf{V_{\rho_2}})(\boldsymbol \Lambda_{\rho_1} \otimes \mathbf{I} + \mathbf{I} \otimes \boldsymbol \Lambda_{\rho_2})^{\nu + 1}(\mathbf{V_{\rho_1}} \otimes \mathbf{V_{\rho_2}})^T
@@ -733,51 +873,51 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
 <div class="columns" style="font-size:75%">
 <div class="column" style="width:58%;">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a></a>dim1 <span class="ot">&lt;-</span> <span class="dv">50</span>; dim2 <span class="ot">&lt;-</span> <span class="dv">50</span></span>
-<span id="cb1-2"><a></a>rho1 <span class="ot">&lt;-</span> <span class="fl">0.5</span>; rho2 <span class="ot">&lt;-</span> <span class="fl">0.3</span></span>
-<span id="cb1-3"><a></a>nu <span class="ot">&lt;-</span> <span class="dv">2</span></span>
-<span id="cb1-4"><a></a></span>
-<span id="cb1-5"><a></a>Q1 <span class="ot">&lt;-</span> <span class="fu">make_AR_prec_matrix</span>(dim1, rho1)</span>
-<span id="cb1-6"><a></a>Q2 <span class="ot">&lt;-</span> <span class="fu">make_AR_prec_matrix</span>(dim2, rho2)</span>
-<span id="cb1-7"><a></a></span>
-<span id="cb1-8"><a></a>I1 <span class="ot">&lt;-</span> Matrix<span class="sc">::</span><span class="fu">Diagonal</span>(dim1)</span>
-<span id="cb1-9"><a></a>I2 <span class="ot">&lt;-</span> Matrix<span class="sc">::</span><span class="fu">Diagonal</span>(dim2)</span>
-<span id="cb1-10"><a></a></span>
-<span id="cb1-11"><a></a>Q <span class="ot">&lt;-</span> temp <span class="ot">&lt;-</span> <span class="fu">kronecker</span>(Q1, I2) <span class="sc">+</span> <span class="fu">kronecker</span>(I1, Q2)</span>
-<span id="cb1-12"><a></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">seq_len</span>(nu)) Q <span class="ot">&lt;-</span> Q <span class="sc">%*%</span> temp</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a></a>dim1 <span class="ot">&lt;-</span> <span class="dv">50</span>; dim2 <span class="ot">&lt;-</span> <span class="dv">50</span></span>
+<span id="cb6-2"><a></a>rho1 <span class="ot">&lt;-</span> <span class="fl">0.5</span>; rho2 <span class="ot">&lt;-</span> <span class="fl">0.3</span></span>
+<span id="cb6-3"><a></a>nu <span class="ot">&lt;-</span> <span class="dv">2</span></span>
+<span id="cb6-4"><a></a></span>
+<span id="cb6-5"><a></a>Q1 <span class="ot">&lt;-</span> <span class="fu">make_AR_prec_matrix</span>(dim1, rho1)</span>
+<span id="cb6-6"><a></a>Q2 <span class="ot">&lt;-</span> <span class="fu">make_AR_prec_matrix</span>(dim2, rho2)</span>
+<span id="cb6-7"><a></a></span>
+<span id="cb6-8"><a></a>I1 <span class="ot">&lt;-</span> Matrix<span class="sc">::</span><span class="fu">Diagonal</span>(dim1)</span>
+<span id="cb6-9"><a></a>I2 <span class="ot">&lt;-</span> Matrix<span class="sc">::</span><span class="fu">Diagonal</span>(dim2)</span>
+<span id="cb6-10"><a></a></span>
+<span id="cb6-11"><a></a>Q <span class="ot">&lt;-</span> temp <span class="ot">&lt;-</span> <span class="fu">kronecker</span>(Q1, I2) <span class="sc">+</span> <span class="fu">kronecker</span>(I1, Q2)</span>
+<span id="cb6-12"><a></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">seq_len</span>(nu)) Q <span class="ot">&lt;-</span> Q <span class="sc">%*%</span> temp</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div><div class="column" style="width:42%;">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a></a>msd <span class="ot">&lt;-</span> <span class="cf">function</span>(Q1, Q2) {</span>
-<span id="cb2-2"><a></a></span>
-<span id="cb2-3"><a></a>  E1 <span class="ot">&lt;-</span> <span class="fu">eigen</span>(Q1)</span>
-<span id="cb2-4"><a></a>  E2 <span class="ot">&lt;-</span> <span class="fu">eigen</span>(Q2)</span>
-<span id="cb2-5"><a></a></span>
-<span id="cb2-6"><a></a>  <span class="fu">marginal_sd_eigen</span>(</span>
-<span id="cb2-7"><a></a>    E1<span class="sc">$</span>values, E1<span class="sc">$</span>vectors, dim1,</span>
-<span id="cb2-8"><a></a>    E2<span class="sc">$</span>values, E2<span class="sc">$</span>vectors, dim2,</span>
-<span id="cb2-9"><a></a>    nu</span>
-<span id="cb2-10"><a></a>  ) <span class="sc">|&gt;</span> </span>
-<span id="cb2-11"><a></a>  <span class="fu">sort</span>()</span>
-<span id="cb2-12"><a></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a></a>msd <span class="ot">&lt;-</span> <span class="cf">function</span>(Q1, Q2) {</span>
+<span id="cb7-2"><a></a></span>
+<span id="cb7-3"><a></a>  E1 <span class="ot">&lt;-</span> <span class="fu">eigen</span>(Q1)</span>
+<span id="cb7-4"><a></a>  E2 <span class="ot">&lt;-</span> <span class="fu">eigen</span>(Q2)</span>
+<span id="cb7-5"><a></a></span>
+<span id="cb7-6"><a></a>  <span class="fu">marginal_sd_eigen</span>(</span>
+<span id="cb7-7"><a></a>    E1<span class="sc">$</span>values, E1<span class="sc">$</span>vectors, dim1,</span>
+<span id="cb7-8"><a></a>    E2<span class="sc">$</span>values, E2<span class="sc">$</span>vectors, dim2,</span>
+<span id="cb7-9"><a></a>    nu</span>
+<span id="cb7-10"><a></a>  ) <span class="sc">|&gt;</span> </span>
+<span id="cb7-11"><a></a>  <span class="fu">sort</span>()</span>
+<span id="cb7-12"><a></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div></div>
 <div style="font-size:75%">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a></a>bench<span class="sc">::</span><span class="fu">mark</span>(</span>
-<span id="cb3-2"><a></a>  <span class="st">"solve"</span> <span class="ot">=</span> <span class="fu">solve</span>(Q) <span class="sc">|&gt;</span> <span class="fu">diag</span>() <span class="sc">|&gt;</span> <span class="fu">sqrt</span>() <span class="sc">|&gt;</span> <span class="fu">sort</span>(),</span>
-<span id="cb3-3"><a></a>  <span class="st">"inla.qinv"</span> <span class="ot">=</span> <span class="fu">inla.qinv</span>(Q) <span class="sc">|&gt;</span> <span class="fu">diag</span>() <span class="sc">|&gt;</span> <span class="fu">sqrt</span>() <span class="sc">|&gt;</span> <span class="fu">sort</span>(),</span>
-<span id="cb3-4"><a></a>  <span class="st">"marginal_sd_eigen"</span> <span class="ot">=</span> <span class="fu">msd</span>(Q1, Q2),</span>
-<span id="cb3-5"><a></a>  <span class="at">iterations =</span> <span class="dv">10</span>,</span>
-<span id="cb3-6"><a></a>  <span class="at">filter_gc =</span> <span class="cn">FALSE</span> </span>
-<span id="cb3-7"><a></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a></a>bench<span class="sc">::</span><span class="fu">mark</span>(</span>
+<span id="cb8-2"><a></a>  <span class="st">"solve"</span> <span class="ot">=</span> <span class="fu">solve</span>(Q) <span class="sc">|&gt;</span> <span class="fu">diag</span>() <span class="sc">|&gt;</span> <span class="fu">sqrt</span>() <span class="sc">|&gt;</span> <span class="fu">sort</span>(),</span>
+<span id="cb8-3"><a></a>  <span class="st">"inla.qinv"</span> <span class="ot">=</span> <span class="fu">inla.qinv</span>(Q) <span class="sc">|&gt;</span> <span class="fu">diag</span>() <span class="sc">|&gt;</span> <span class="fu">sqrt</span>() <span class="sc">|&gt;</span> <span class="fu">sort</span>(),</span>
+<span id="cb8-4"><a></a>  <span class="st">"marginal_sd_eigen"</span> <span class="ot">=</span> <span class="fu">msd</span>(Q1, Q2),</span>
+<span id="cb8-5"><a></a>  <span class="at">iterations =</span> <span class="dv">10</span>,</span>
+<span id="cb8-6"><a></a>  <span class="at">filter_gc =</span> <span class="cn">FALSE</span> </span>
+<span id="cb8-7"><a></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 3 × 6
   expression             min   median `itr/sec` mem_alloc `gc/sec`
   &lt;bch:expr&gt;        &lt;bch:tm&gt; &lt;bch:tm&gt;     &lt;dbl&gt; &lt;bch:byt&gt;    &lt;dbl&gt;
-1 solve                1.27s     1.3s     0.755   78.17MB    0.755
-2 inla.qinv         378.61ms  395.8ms     2.49     4.35MB    0    
-3 marginal_sd_eigen   1.36ms   1.54ms   574.     649.35KB    0    </code></pre>
+1 solve                1.16s    1.17s     0.838   78.15MB    0.670
+2 inla.qinv         377.65ms 382.19ms     2.52     4.35MB    0.252
+3 marginal_sd_eigen   1.35ms   1.46ms   597.     647.36KB    0    </code></pre>
 </div>
 </div>
 </div>
@@ -855,7 +995,7 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
 <hr>
 <div class="columns">
 <div class="column" style="width:40%;">
-<h3 id="folded-circulant-approximation-kent2022-mondal2018">Folded Circulant Approximation <span class="citation" data-cites="kent2022 mondal2018">[<a href="#/references" role="doc-biblioref" onclick="">11</a>–<a href="#/references" role="doc-biblioref" onclick="">12</a>]</span></h3>
+<h3 id="folded-circulant-approximation-kent2022-mondal2018">Folded Circulant Approximation <span class="citation" data-cites="kent2022 mondal2018">[<a href="#/references" role="doc-biblioref" onclick="">15</a>–<a href="#/references" role="doc-biblioref" onclick="">16</a>]</span></h3>
 <p>We double the data by reflecting it, giving us the data <span class="math inline">\(x_1,  \dots, x_n, x_n, \dots, x_1\)</span>. We then model this doubled data with a <span class="math inline">\(2n \times 2n\)</span> circulant matrix. Get fast computation like in circulant case, but better boundary conditions. Quadratic form written out as an <span class="math inline">\(n \times n\)</span> matrix takes the form on the right.</p>
 </div><div class="column" style="width:60%;">
 <p><span class="math display">\[
@@ -871,27 +1011,108 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
 </div></div>
 </div>
 </section>
-<section id="benchmark-density-computations" class="slide level2" data-name="Results">
+<section id="exact-stan-model" class="slide level2" data-name="Results" style="font-size:60%">
+<h2>Exact Stan Model</h2>
+<div class="cell" data-output.var="matern_copula">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource stan number-lines code-with-copy"><code class="sourceCode stan"><span id="cb10-1"><a></a><span class="dt">real</span> matern_copula_exact_lpdf(<span class="dt">matrix</span> Z, <span class="dt">int</span> dim1, <span class="dt">real</span> rho1, <span class="dt">int</span> dim2, <span class="dt">real</span> rho2, <span class="dt">int</span> nu) {</span>
+<span id="cb10-2"><a></a>  <span class="dt">int</span> n_obs = cols(Z);</span>
+<span id="cb10-3"><a></a>  <span class="dt">int</span> D = dim1 * dim2;</span>
+<span id="cb10-4"><a></a>  <span class="dt">tuple</span>(<span class="dt">matrix</span>[dim1, dim1], <span class="dt">vector</span>[dim1]) E1 = ar1_precision_eigen(dim1, rho1);</span>
+<span id="cb10-5"><a></a>  <span class="dt">tuple</span>(<span class="dt">matrix</span>[dim2, dim2], <span class="dt">vector</span>[dim2]) E2 = ar1_precision_eigen(dim2, rho2);</span>
+<span id="cb10-6"><a></a></span>
+<span id="cb10-7"><a></a>  <span class="dt">real</span> log_det = <span class="dv">0</span>;</span>
+<span id="cb10-8"><a></a>  <span class="dt">real</span> quadform_sum = <span class="dv">0</span>;</span>
+<span id="cb10-9"><a></a></span>
+<span id="cb10-10"><a></a>  <span class="dt">vector</span>[D] marginal_sds = marginal_sd(E1, E2, nu);</span>
+<span id="cb10-11"><a></a></span>
+<span id="cb10-12"><a></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span>:dim1) {</span>
+<span id="cb10-13"><a></a>    <span class="cf">for</span> (j <span class="cf">in</span> <span class="dv">1</span>:dim2) {</span>
+<span id="cb10-14"><a></a>      <span class="dt">vector</span>[D] v = kronecker(E1<span class="fl">.1</span>[, i], E2<span class="fl">.1</span>[, j]);</span>
+<span id="cb10-15"><a></a>      v = v .* marginal_sds;  </span>
+<span id="cb10-16"><a></a>      <span class="dt">real</span> norm_v = sqrt(sum(square(v)));</span>
+<span id="cb10-17"><a></a>      v /= norm_v;  </span>
+<span id="cb10-18"><a></a>      </span>
+<span id="cb10-19"><a></a>      <span class="dt">real</span> lambda = pow(E1<span class="fl">.2</span>[i] + E2<span class="fl">.2</span>[j], nu + <span class="dv">1</span>) * square(norm_v);</span>
+<span id="cb10-20"><a></a>      log_det += log(lambda);</span>
+<span id="cb10-21"><a></a>      </span>
+<span id="cb10-22"><a></a>      <span class="dt">row_vector</span>[n_obs] q = v' * Z;  </span>
+<span id="cb10-23"><a></a>      quadform_sum += dot_self(q) * lambda;</span>
+<span id="cb10-24"><a></a>    }</span>
+<span id="cb10-25"><a></a>  }</span>
+<span id="cb10-26"><a></a></span>
+<span id="cb10-27"><a></a>  <span class="dt">real</span> z_squared = sum(columns_dot_self(Z));</span>
+<span id="cb10-28"><a></a></span>
+<span id="cb10-29"><a></a>  <span class="cf">return</span> -<span class="fl">0.5</span> * (quadform_sum - n_obs * log_det - z_squared);</span>
+<span id="cb10-30"><a></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="approximation" class="slide level2" style="font-size:50%">
+<h2>Approximation</h2>
+<div class="cell" data-output.var="fold_data">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource stan number-lines code-with-copy"><code class="sourceCode stan"><span id="cb11-1"><a></a><span class="dt">vector</span> fold_data(<span class="dt">vector</span> x, <span class="dt">int</span> n1, <span class="dt">int</span> n2) {</span>
+<span id="cb11-2"><a></a>  <span class="dt">vector</span>[<span class="dv">4</span> * n1 * n2] folded;</span>
+<span id="cb11-3"><a></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span>:n1) {</span>
+<span id="cb11-4"><a></a>    <span class="cf">for</span> (j <span class="cf">in</span> <span class="dv">1</span>:n2) {</span>
+<span id="cb11-5"><a></a>      <span class="dt">int</span> idx = (i - <span class="dv">1</span>) * n2 + j;</span>
+<span id="cb11-6"><a></a>      folded[(i - <span class="dv">1</span>) * <span class="dv">2</span> * n2 + j] = x[idx];</span>
+<span id="cb11-7"><a></a>      folded[(i - <span class="dv">1</span>) * <span class="dv">2</span> * n2 + (<span class="dv">2</span> * n2 - j + <span class="dv">1</span>)] = x[idx];</span>
+<span id="cb11-8"><a></a>      folded[(<span class="dv">2</span> * n1 - i) * <span class="dv">2</span> * n2 + j] = x[idx];</span>
+<span id="cb11-9"><a></a>      folded[(<span class="dv">2</span> * n1 - i) * <span class="dv">2</span> * n2 + (<span class="dv">2</span> * n2 - j + <span class="dv">1</span>)] = x[idx];</span>
+<span id="cb11-10"><a></a>    }</span>
+<span id="cb11-11"><a></a>  }</span>
+<span id="cb11-12"><a></a>  <span class="cf">return</span> folded;</span>
+<span id="cb11-13"><a></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-output.var="base_matrix">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource stan number-lines code-with-copy"><code class="sourceCode stan"><span id="cb12-1"><a></a><span class="dt">complex_matrix</span> create_base_matrix_and_rescale_eigenvalues(<span class="dt">int</span> dim1, <span class="dt">int</span> dim2, <span class="dt">real</span> rho1, <span class="dt">real</span> rho2, <span class="dt">int</span> nu) {</span>
+<span id="cb12-2"><a></a>  </span>
+<span id="cb12-3"><a></a>  <span class="dt">matrix</span>[dim2, dim1] c = make_base_matrix(dim1, dim2, rho1, rho2);</span>
+<span id="cb12-4"><a></a></span>
+<span id="cb12-5"><a></a>  <span class="co">// Compute the eigenvalues and marginal standard deviation</span></span>
+<span id="cb12-6"><a></a>  <span class="dt">complex_matrix</span>[dim2, dim1] sqrt_eigs = pow(fft2(c), (nu + <span class="fl">1.0</span>) / <span class="fl">2.0</span>);</span>
+<span id="cb12-7"><a></a>  <span class="dt">complex_matrix</span>[dim2, dim1] inv_sqrt_eigs = pow(sqrt_eigs, -<span class="dv">1</span>);</span>
+<span id="cb12-8"><a></a>  <span class="dt">real</span> msd = get_real(inv_fft2(inv_sqrt_eigs)[<span class="dv">1</span>, <span class="dv">1</span>]);</span>
+<span id="cb12-9"><a></a>  sqrt_eigs *= msd;</span>
+<span id="cb12-10"><a></a>  </span>
+<span id="cb12-11"><a></a>  <span class="cf">return</span> sqrt_eigs;</span>
+<span id="cb12-12"><a></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-output.var="folded_copula">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource stan number-lines code-with-copy"><code class="sourceCode stan"><span id="cb13-1"><a></a><span class="dt">real</span> matern_folded_copula_lpdf(<span class="dt">matrix</span> Z, <span class="dt">int</span> dim1, <span class="dt">int</span> dim2, <span class="dt">real</span> rho1, <span class="dt">real</span> rho2, <span class="dt">int</span> nu) {</span>
+<span id="cb13-2"><a></a>  <span class="dt">int</span> n_obs = cols(Z);</span>
+<span id="cb13-3"><a></a>  <span class="dt">complex_matrix</span>[<span class="dv">2</span> * dim2, <span class="dv">2</span> * dim1] eigs = create_base_matrix_and_rescale_eigenvalues(<span class="dv">2</span> * dim1, <span class="dv">2</span> * dim2, rho1, rho2, nu);</span>
+<span id="cb13-4"><a></a>  <span class="dt">real</span> quad_forms = <span class="dv">0</span>;</span>
+<span id="cb13-5"><a></a>  <span class="dt">real</span> log_det = sum(log(get_real(eigs)));</span>
+<span id="cb13-6"><a></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span>:n_obs) {</span>
+<span id="cb13-7"><a></a>    <span class="dt">vector</span>[<span class="dv">4</span> * dim1 * dim2] Z_fold = fold_data(Z[, i], dim1, dim2);</span>
+<span id="cb13-8"><a></a>    <span class="dt">vector</span>[<span class="dv">4</span> * dim1 * dim2] Qz = matvec_prod(eigs, Z_fold);</span>
+<span id="cb13-9"><a></a>    quad_forms += dot_product(Z_fold, Qz) - dot_self(Z_fold);</span>
+<span id="cb13-10"><a></a>  } </span>
+<span id="cb13-11"><a></a>  <span class="cf">return</span> - <span class="fl">0.5</span> * (quad_forms - n_obs * log_det);</span>
+<span id="cb13-12"><a></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="benchmark-density-computations" class="slide level2">
 <h2>Benchmark: Density Computations</h2>
 <div class="cell">
 <div class="cell-output-display">
-<div id="uyfvbicrqa" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#uyfvbicrqa table {
+<div id="urwkjppubs" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#urwkjppubs table {
   font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#uyfvbicrqa thead, #uyfvbicrqa tbody, #uyfvbicrqa tfoot, #uyfvbicrqa tr, #uyfvbicrqa td, #uyfvbicrqa th {
+#urwkjppubs thead, #urwkjppubs tbody, #urwkjppubs tfoot, #urwkjppubs tr, #urwkjppubs td, #urwkjppubs th {
   border-style: none;
 }
 
-#uyfvbicrqa p {
+#urwkjppubs p {
   margin: 0;
   padding: 0;
 }
 
-#uyfvbicrqa .gt_table {
+#urwkjppubs .gt_table {
   display: table;
   border-collapse: collapse;
   line-height: normal;
@@ -917,12 +1138,12 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   border-left-color: #D3D3D3;
 }
 
-#uyfvbicrqa .gt_caption {
+#urwkjppubs .gt_caption {
   padding-top: 4px;
   padding-bottom: 4px;
 }
 
-#uyfvbicrqa .gt_title {
+#urwkjppubs .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -934,7 +1155,7 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   border-bottom-width: 0;
 }
 
-#uyfvbicrqa .gt_subtitle {
+#urwkjppubs .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -946,7 +1167,7 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   border-top-width: 0;
 }
 
-#uyfvbicrqa .gt_heading {
+#urwkjppubs .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -958,13 +1179,13 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   border-right-color: #D3D3D3;
 }
 
-#uyfvbicrqa .gt_bottom_border {
+#urwkjppubs .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#uyfvbicrqa .gt_col_headings {
+#urwkjppubs .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -979,7 +1200,7 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   border-right-color: #D3D3D3;
 }
 
-#uyfvbicrqa .gt_col_heading {
+#urwkjppubs .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -999,7 +1220,7 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   overflow-x: hidden;
 }
 
-#uyfvbicrqa .gt_column_spanner_outer {
+#urwkjppubs .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1011,15 +1232,15 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   padding-right: 4px;
 }
 
-#uyfvbicrqa .gt_column_spanner_outer:first-child {
+#urwkjppubs .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#uyfvbicrqa .gt_column_spanner_outer:last-child {
+#urwkjppubs .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#uyfvbicrqa .gt_column_spanner {
+#urwkjppubs .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -1031,11 +1252,11 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   width: 100%;
 }
 
-#uyfvbicrqa .gt_spanner_row {
+#urwkjppubs .gt_spanner_row {
   border-bottom-style: hidden;
 }
 
-#uyfvbicrqa .gt_group_heading {
+#urwkjppubs .gt_group_heading {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1061,7 +1282,7 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   text-align: left;
 }
 
-#uyfvbicrqa .gt_empty_group_heading {
+#urwkjppubs .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -1076,15 +1297,15 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   vertical-align: middle;
 }
 
-#uyfvbicrqa .gt_from_md > :first-child {
+#urwkjppubs .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#uyfvbicrqa .gt_from_md > :last-child {
+#urwkjppubs .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#uyfvbicrqa .gt_row {
+#urwkjppubs .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1103,7 +1324,7 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   overflow-x: hidden;
 }
 
-#uyfvbicrqa .gt_stub {
+#urwkjppubs .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1116,7 +1337,7 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   padding-right: 5px;
 }
 
-#uyfvbicrqa .gt_stub_row_group {
+#urwkjppubs .gt_stub_row_group {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1130,15 +1351,15 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   vertical-align: top;
 }
 
-#uyfvbicrqa .gt_row_group_first td {
+#urwkjppubs .gt_row_group_first td {
   border-top-width: 2px;
 }
 
-#uyfvbicrqa .gt_row_group_first th {
+#urwkjppubs .gt_row_group_first th {
   border-top-width: 2px;
 }
 
-#uyfvbicrqa .gt_summary_row {
+#urwkjppubs .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1148,16 +1369,16 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   padding-right: 5px;
 }
 
-#uyfvbicrqa .gt_first_summary_row {
+#urwkjppubs .gt_first_summary_row {
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
-#uyfvbicrqa .gt_first_summary_row.thick {
+#urwkjppubs .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
-#uyfvbicrqa .gt_last_summary_row {
+#urwkjppubs .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1167,7 +1388,7 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   border-bottom-color: #D3D3D3;
 }
 
-#uyfvbicrqa .gt_grand_summary_row {
+#urwkjppubs .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1177,7 +1398,7 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   padding-right: 5px;
 }
 
-#uyfvbicrqa .gt_first_grand_summary_row {
+#urwkjppubs .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1187,7 +1408,7 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   border-top-color: #D3D3D3;
 }
 
-#uyfvbicrqa .gt_last_grand_summary_row_top {
+#urwkjppubs .gt_last_grand_summary_row_top {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1197,11 +1418,11 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   border-bottom-color: #D3D3D3;
 }
 
-#uyfvbicrqa .gt_striped {
+#urwkjppubs .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#uyfvbicrqa .gt_table_body {
+#urwkjppubs .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -1210,7 +1431,7 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   border-bottom-color: #D3D3D3;
 }
 
-#uyfvbicrqa .gt_footnotes {
+#urwkjppubs .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1224,7 +1445,7 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   border-right-color: #D3D3D3;
 }
 
-#uyfvbicrqa .gt_footnote {
+#urwkjppubs .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding-top: 4px;
@@ -1233,7 +1454,7 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   padding-right: 5px;
 }
 
-#uyfvbicrqa .gt_sourcenotes {
+#urwkjppubs .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1247,7 +1468,7 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   border-right-color: #D3D3D3;
 }
 
-#uyfvbicrqa .gt_sourcenote {
+#urwkjppubs .gt_sourcenote {
   font-size: 90%;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -1255,78 +1476,89 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
   padding-right: 5px;
 }
 
-#uyfvbicrqa .gt_left {
+#urwkjppubs .gt_left {
   text-align: left;
 }
 
-#uyfvbicrqa .gt_center {
+#urwkjppubs .gt_center {
   text-align: center;
 }
 
-#uyfvbicrqa .gt_right {
+#urwkjppubs .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#uyfvbicrqa .gt_font_normal {
+#urwkjppubs .gt_font_normal {
   font-weight: normal;
 }
 
-#uyfvbicrqa .gt_font_bold {
+#urwkjppubs .gt_font_bold {
   font-weight: bold;
 }
 
-#uyfvbicrqa .gt_font_italic {
+#urwkjppubs .gt_font_italic {
   font-style: italic;
 }
 
-#uyfvbicrqa .gt_super {
+#urwkjppubs .gt_super {
   font-size: 65%;
 }
 
-#uyfvbicrqa .gt_footnote_marks {
+#urwkjppubs .gt_footnote_marks {
   font-size: 75%;
   vertical-align: 0.4em;
   position: initial;
 }
 
-#uyfvbicrqa .gt_asterisk {
+#urwkjppubs .gt_asterisk {
   font-size: 100%;
   vertical-align: 0;
 }
 
-#uyfvbicrqa .gt_indent_1 {
+#urwkjppubs .gt_indent_1 {
   text-indent: 5px;
 }
 
-#uyfvbicrqa .gt_indent_2 {
+#urwkjppubs .gt_indent_2 {
   text-indent: 10px;
 }
 
-#uyfvbicrqa .gt_indent_3 {
+#urwkjppubs .gt_indent_3 {
   text-indent: 15px;
 }
 
-#uyfvbicrqa .gt_indent_4 {
+#urwkjppubs .gt_indent_4 {
   text-indent: 20px;
 }
 
-#uyfvbicrqa .gt_indent_5 {
+#urwkjppubs .gt_indent_5 {
   text-indent: 25px;
 }
 
-#uyfvbicrqa .katex-display {
+#urwkjppubs .katex-display {
   display: inline-flex !important;
   margin-bottom: 0.75em !important;
 }
 
-#uyfvbicrqa div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#urwkjppubs div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
   height: 0px !important;
 }
 </style>
 
 <table class="gt_table caption-top" data-quarto-postprocess="true" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
 <caption>Benchmarking how long it takes to evaluate the density of a Mátern(<span class="math inline">\(\nu\)</span>)-like field with correlation parameter <span class="math inline">\(\rho\)</span>, either unscaled or scaled to have unit marginal variance</caption>
+<colgroup>
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 11%">
+</colgroup>
 <thead>
 <tr class="header gt_col_headings gt_spanner_row">
 <th class="gt_center gt_columns_top_border gt_column_spanner_outer" data-quarto-table-cell-role="th" scope="col"></th>
@@ -1363,15 +1595,15 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
 <td class="gt_row gt_right" headers="sp_2">48.9%</td>
 </tr>
 <tr class="even">
-<td class="gt_row gt_left" headers="Grid">40x40</td>
-<td class="gt_row gt_left" headers="Cholesky (Unscaled)">1.77ms</td>
-<td class="gt_row gt_left" headers="Eigen (Unscaled)">543.76µs</td>
-<td class="gt_row gt_right" headers="sp_3">30.7%</td>
-<td class="gt_row gt_left" headers="eig">1.65ms</td>
-<td class="gt_row gt_left" headers="circ">115.8µs</td>
-<td class="gt_row gt_right" headers="sp_1">7.0%</td>
-<td class="gt_row gt_left" headers="fol">300.9µs</td>
-<td class="gt_row gt_right" headers="sp_2">18.3%</td>
+<td class="gt_row gt_left gt_striped" headers="Grid">40x40</td>
+<td class="gt_row gt_left gt_striped" headers="Cholesky (Unscaled)">1.77ms</td>
+<td class="gt_row gt_left gt_striped" headers="Eigen (Unscaled)">543.76µs</td>
+<td class="gt_row gt_right gt_striped" headers="sp_3">30.7%</td>
+<td class="gt_row gt_left gt_striped" headers="eig">1.65ms</td>
+<td class="gt_row gt_left gt_striped" headers="circ">115.8µs</td>
+<td class="gt_row gt_right gt_striped" headers="sp_1">7.0%</td>
+<td class="gt_row gt_left gt_striped" headers="fol">300.9µs</td>
+<td class="gt_row gt_right gt_striped" headers="sp_2">18.3%</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_left" headers="Grid">60x60</td>
@@ -1385,15 +1617,15 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
 <td class="gt_row gt_right" headers="sp_2">8.6%</td>
 </tr>
 <tr class="even">
-<td class="gt_row gt_left" headers="Grid">80x80</td>
-<td class="gt_row gt_left" headers="Cholesky (Unscaled)">17.98ms</td>
-<td class="gt_row gt_left" headers="Eigen (Unscaled)">5.17ms</td>
-<td class="gt_row gt_right" headers="sp_3">28.8%</td>
-<td class="gt_row gt_left" headers="eig">21.96ms</td>
-<td class="gt_row gt_left" headers="circ">338.15µs</td>
-<td class="gt_row gt_right" headers="sp_1">1.5%</td>
-<td class="gt_row gt_left" headers="fol">1.26ms</td>
-<td class="gt_row gt_right" headers="sp_2">5.7%</td>
+<td class="gt_row gt_left gt_striped" headers="Grid">80x80</td>
+<td class="gt_row gt_left gt_striped" headers="Cholesky (Unscaled)">17.98ms</td>
+<td class="gt_row gt_left gt_striped" headers="Eigen (Unscaled)">5.17ms</td>
+<td class="gt_row gt_right gt_striped" headers="sp_3">28.8%</td>
+<td class="gt_row gt_left gt_striped" headers="eig">21.96ms</td>
+<td class="gt_row gt_left gt_striped" headers="circ">338.15µs</td>
+<td class="gt_row gt_right gt_striped" headers="sp_1">1.5%</td>
+<td class="gt_row gt_left gt_striped" headers="fol">1.26ms</td>
+<td class="gt_row gt_right gt_striped" headers="sp_2">5.7%</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_left" headers="Grid">100x100</td>
@@ -1407,15 +1639,15 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
 <td class="gt_row gt_right" headers="sp_2">4.9%</td>
 </tr>
 <tr class="even">
-<td class="gt_row gt_left" headers="Grid">120x120</td>
-<td class="gt_row gt_left" headers="Cholesky (Unscaled)">81.1ms</td>
-<td class="gt_row gt_left" headers="Eigen (Unscaled)">22.74ms</td>
-<td class="gt_row gt_right" headers="sp_3">28.0%</td>
-<td class="gt_row gt_left" headers="eig">88.45ms</td>
-<td class="gt_row gt_left" headers="circ">719.55µs</td>
-<td class="gt_row gt_right" headers="sp_1">0.8%</td>
-<td class="gt_row gt_left" headers="fol">2.82ms</td>
-<td class="gt_row gt_right" headers="sp_2">3.2%</td>
+<td class="gt_row gt_left gt_striped" headers="Grid">120x120</td>
+<td class="gt_row gt_left gt_striped" headers="Cholesky (Unscaled)">81.1ms</td>
+<td class="gt_row gt_left gt_striped" headers="Eigen (Unscaled)">22.74ms</td>
+<td class="gt_row gt_right gt_striped" headers="sp_3">28.0%</td>
+<td class="gt_row gt_left gt_striped" headers="eig">88.45ms</td>
+<td class="gt_row gt_left gt_striped" headers="circ">719.55µs</td>
+<td class="gt_row gt_right gt_striped" headers="sp_1">0.8%</td>
+<td class="gt_row gt_left gt_striped" headers="fol">2.82ms</td>
+<td class="gt_row gt_right gt_striped" headers="sp_2">3.2%</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_left" headers="Grid">140x140</td>
@@ -1429,15 +1661,15 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
 <td class="gt_row gt_right" headers="sp_2">3.2%</td>
 </tr>
 <tr class="even">
-<td class="gt_row gt_left" headers="Grid">160x160</td>
-<td class="gt_row gt_left" headers="Cholesky (Unscaled)">233.03ms</td>
-<td class="gt_row gt_left" headers="Eigen (Unscaled)">54.51ms</td>
-<td class="gt_row gt_right" headers="sp_3">23.4%</td>
-<td class="gt_row gt_left" headers="eig">260.7ms</td>
-<td class="gt_row gt_left" headers="circ">1.27ms</td>
-<td class="gt_row gt_right" headers="sp_1">0.5%</td>
-<td class="gt_row gt_left" headers="fol">5.33ms</td>
-<td class="gt_row gt_right" headers="sp_2">2.0%</td>
+<td class="gt_row gt_left gt_striped" headers="Grid">160x160</td>
+<td class="gt_row gt_left gt_striped" headers="Cholesky (Unscaled)">233.03ms</td>
+<td class="gt_row gt_left gt_striped" headers="Eigen (Unscaled)">54.51ms</td>
+<td class="gt_row gt_right gt_striped" headers="sp_3">23.4%</td>
+<td class="gt_row gt_left gt_striped" headers="eig">260.7ms</td>
+<td class="gt_row gt_left gt_striped" headers="circ">1.27ms</td>
+<td class="gt_row gt_right gt_striped" headers="sp_1">0.5%</td>
+<td class="gt_row gt_left gt_striped" headers="fol">5.33ms</td>
+<td class="gt_row gt_right gt_striped" headers="sp_2">2.0%</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_left" headers="Grid">180x180</td>
@@ -1451,15 +1683,15 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
 <td class="gt_row gt_right" headers="sp_2">2.1%</td>
 </tr>
 <tr class="even">
-<td class="gt_row gt_left" headers="Grid">200x200</td>
-<td class="gt_row gt_left" headers="Cholesky (Unscaled)">567.01ms</td>
-<td class="gt_row gt_left" headers="Eigen (Unscaled)">147.51ms</td>
-<td class="gt_row gt_right" headers="sp_3">26.0%</td>
-<td class="gt_row gt_left" headers="eig">676.53ms</td>
-<td class="gt_row gt_left" headers="circ">1.84ms</td>
-<td class="gt_row gt_right" headers="sp_1">0.3%</td>
-<td class="gt_row gt_left" headers="fol">8.62ms</td>
-<td class="gt_row gt_right" headers="sp_2">1.3%</td>
+<td class="gt_row gt_left gt_striped" headers="Grid">200x200</td>
+<td class="gt_row gt_left gt_striped" headers="Cholesky (Unscaled)">567.01ms</td>
+<td class="gt_row gt_left gt_striped" headers="Eigen (Unscaled)">147.51ms</td>
+<td class="gt_row gt_right gt_striped" headers="sp_3">26.0%</td>
+<td class="gt_row gt_left gt_striped" headers="eig">676.53ms</td>
+<td class="gt_row gt_left gt_striped" headers="circ">1.84ms</td>
+<td class="gt_row gt_right gt_striped" headers="sp_1">0.3%</td>
+<td class="gt_row gt_left gt_striped" headers="fol">8.62ms</td>
+<td class="gt_row gt_right gt_striped" headers="sp_2">1.3%</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_left" headers="Grid">220x220</td>
@@ -1473,551 +1705,27 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
 <td class="gt_row gt_right" headers="sp_2">1.4%</td>
 </tr>
 <tr class="even">
-<td class="gt_row gt_left" headers="Grid">240x240</td>
-<td class="gt_row gt_left" headers="Cholesky (Unscaled)">1.07s</td>
-<td class="gt_row gt_left" headers="Eigen (Unscaled)">287ms</td>
-<td class="gt_row gt_right" headers="sp_3">26.8%</td>
-<td class="gt_row gt_left" headers="eig">1.34s</td>
-<td class="gt_row gt_left" headers="circ">2.82ms</td>
-<td class="gt_row gt_right" headers="sp_1">0.2%</td>
-<td class="gt_row gt_left" headers="fol">14.77ms</td>
-<td class="gt_row gt_right" headers="sp_2">1.1%</td>
+<td class="gt_row gt_left gt_striped" headers="Grid">240x240</td>
+<td class="gt_row gt_left gt_striped" headers="Cholesky (Unscaled)">1.07s</td>
+<td class="gt_row gt_left gt_striped" headers="Eigen (Unscaled)">287ms</td>
+<td class="gt_row gt_right gt_striped" headers="sp_3">26.8%</td>
+<td class="gt_row gt_left gt_striped" headers="eig">1.34s</td>
+<td class="gt_row gt_left gt_striped" headers="circ">2.82ms</td>
+<td class="gt_row gt_right gt_striped" headers="sp_1">0.2%</td>
+<td class="gt_row gt_left gt_striped" headers="fol">14.77ms</td>
+<td class="gt_row gt_right gt_striped" headers="sp_2">1.1%</td>
 </tr>
-</tbody>
+</tbody><tfoot class="gt_footnotes">
+<tr class="odd">
+<td colspan="9" class="gt_footnote"><p>See <a href="https://bggj.is/materneigenpaper/">https://bggj.is/materneigenpaper/</a> for a description of algorithms and <a href="https://github.com/bgautijonsson/stdmatern">https://github.com/bgautijonsson/stdmatern</a> for implementations</p></td>
+</tr>
+</tfoot>
+
 </table>
 
 </div>
 </div>
 </div>
-</section>
-<section id="benchmark-maximum-likelihood" class="slide level2">
-<h2>Benchmark: Maximum Likelihood</h2>
-<div class="columns" style="font-size:50%">
-<div class="column" style="width:65%;">
-<p><img data-src="images/bench_ml_bias.png"></p>
-</div><div class="column" style="width:35%;">
-<p><br> <br></p>
-<div class="cell">
-<div class="cell-output-display">
-<div id="nmiqecejaw" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#nmiqecejaw table {
-  font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-#nmiqecejaw thead, #nmiqecejaw tbody, #nmiqecejaw tfoot, #nmiqecejaw tr, #nmiqecejaw td, #nmiqecejaw th {
-  border-style: none;
-}
-
-#nmiqecejaw p {
-  margin: 0;
-  padding: 0;
-}
-
-#nmiqecejaw .gt_table {
-  display: table;
-  border-collapse: collapse;
-  line-height: normal;
-  margin-left: auto;
-  margin-right: auto;
-  color: #333333;
-  font-size: 16px;
-  font-weight: normal;
-  font-style: normal;
-  background-color: #FFFFFF;
-  width: auto;
-  border-top-style: solid;
-  border-top-width: 2px;
-  border-top-color: #A8A8A8;
-  border-right-style: none;
-  border-right-width: 2px;
-  border-right-color: #D3D3D3;
-  border-bottom-style: solid;
-  border-bottom-width: 2px;
-  border-bottom-color: #A8A8A8;
-  border-left-style: none;
-  border-left-width: 2px;
-  border-left-color: #D3D3D3;
-}
-
-#nmiqecejaw .gt_caption {
-  padding-top: 4px;
-  padding-bottom: 4px;
-}
-
-#nmiqecejaw .gt_title {
-  color: #333333;
-  font-size: 125%;
-  font-weight: initial;
-  padding-top: 4px;
-  padding-bottom: 4px;
-  padding-left: 5px;
-  padding-right: 5px;
-  border-bottom-color: #FFFFFF;
-  border-bottom-width: 0;
-}
-
-#nmiqecejaw .gt_subtitle {
-  color: #333333;
-  font-size: 85%;
-  font-weight: initial;
-  padding-top: 3px;
-  padding-bottom: 5px;
-  padding-left: 5px;
-  padding-right: 5px;
-  border-top-color: #FFFFFF;
-  border-top-width: 0;
-}
-
-#nmiqecejaw .gt_heading {
-  background-color: #FFFFFF;
-  text-align: center;
-  border-bottom-color: #FFFFFF;
-  border-left-style: none;
-  border-left-width: 1px;
-  border-left-color: #D3D3D3;
-  border-right-style: none;
-  border-right-width: 1px;
-  border-right-color: #D3D3D3;
-}
-
-#nmiqecejaw .gt_bottom_border {
-  border-bottom-style: solid;
-  border-bottom-width: 2px;
-  border-bottom-color: #D3D3D3;
-}
-
-#nmiqecejaw .gt_col_headings {
-  border-top-style: solid;
-  border-top-width: 2px;
-  border-top-color: #D3D3D3;
-  border-bottom-style: solid;
-  border-bottom-width: 2px;
-  border-bottom-color: #D3D3D3;
-  border-left-style: none;
-  border-left-width: 1px;
-  border-left-color: #D3D3D3;
-  border-right-style: none;
-  border-right-width: 1px;
-  border-right-color: #D3D3D3;
-}
-
-#nmiqecejaw .gt_col_heading {
-  color: #333333;
-  background-color: #FFFFFF;
-  font-size: 100%;
-  font-weight: normal;
-  text-transform: inherit;
-  border-left-style: none;
-  border-left-width: 1px;
-  border-left-color: #D3D3D3;
-  border-right-style: none;
-  border-right-width: 1px;
-  border-right-color: #D3D3D3;
-  vertical-align: bottom;
-  padding-top: 5px;
-  padding-bottom: 6px;
-  padding-left: 5px;
-  padding-right: 5px;
-  overflow-x: hidden;
-}
-
-#nmiqecejaw .gt_column_spanner_outer {
-  color: #333333;
-  background-color: #FFFFFF;
-  font-size: 100%;
-  font-weight: normal;
-  text-transform: inherit;
-  padding-top: 0;
-  padding-bottom: 0;
-  padding-left: 4px;
-  padding-right: 4px;
-}
-
-#nmiqecejaw .gt_column_spanner_outer:first-child {
-  padding-left: 0;
-}
-
-#nmiqecejaw .gt_column_spanner_outer:last-child {
-  padding-right: 0;
-}
-
-#nmiqecejaw .gt_column_spanner {
-  border-bottom-style: solid;
-  border-bottom-width: 2px;
-  border-bottom-color: #D3D3D3;
-  vertical-align: bottom;
-  padding-top: 5px;
-  padding-bottom: 5px;
-  overflow-x: hidden;
-  display: inline-block;
-  width: 100%;
-}
-
-#nmiqecejaw .gt_spanner_row {
-  border-bottom-style: hidden;
-}
-
-#nmiqecejaw .gt_group_heading {
-  padding-top: 8px;
-  padding-bottom: 8px;
-  padding-left: 5px;
-  padding-right: 5px;
-  color: #333333;
-  background-color: #FFFFFF;
-  font-size: 100%;
-  font-weight: initial;
-  text-transform: inherit;
-  border-top-style: solid;
-  border-top-width: 2px;
-  border-top-color: #D3D3D3;
-  border-bottom-style: solid;
-  border-bottom-width: 2px;
-  border-bottom-color: #D3D3D3;
-  border-left-style: none;
-  border-left-width: 1px;
-  border-left-color: #D3D3D3;
-  border-right-style: none;
-  border-right-width: 1px;
-  border-right-color: #D3D3D3;
-  vertical-align: middle;
-  text-align: left;
-}
-
-#nmiqecejaw .gt_empty_group_heading {
-  padding: 0.5px;
-  color: #333333;
-  background-color: #FFFFFF;
-  font-size: 100%;
-  font-weight: initial;
-  border-top-style: solid;
-  border-top-width: 2px;
-  border-top-color: #D3D3D3;
-  border-bottom-style: solid;
-  border-bottom-width: 2px;
-  border-bottom-color: #D3D3D3;
-  vertical-align: middle;
-}
-
-#nmiqecejaw .gt_from_md > :first-child {
-  margin-top: 0;
-}
-
-#nmiqecejaw .gt_from_md > :last-child {
-  margin-bottom: 0;
-}
-
-#nmiqecejaw .gt_row {
-  padding-top: 8px;
-  padding-bottom: 8px;
-  padding-left: 5px;
-  padding-right: 5px;
-  margin: 10px;
-  border-top-style: solid;
-  border-top-width: 1px;
-  border-top-color: #D3D3D3;
-  border-left-style: none;
-  border-left-width: 1px;
-  border-left-color: #D3D3D3;
-  border-right-style: none;
-  border-right-width: 1px;
-  border-right-color: #D3D3D3;
-  vertical-align: middle;
-  overflow-x: hidden;
-}
-
-#nmiqecejaw .gt_stub {
-  color: #333333;
-  background-color: #FFFFFF;
-  font-size: 100%;
-  font-weight: initial;
-  text-transform: inherit;
-  border-right-style: solid;
-  border-right-width: 2px;
-  border-right-color: #D3D3D3;
-  padding-left: 5px;
-  padding-right: 5px;
-}
-
-#nmiqecejaw .gt_stub_row_group {
-  color: #333333;
-  background-color: #FFFFFF;
-  font-size: 100%;
-  font-weight: initial;
-  text-transform: inherit;
-  border-right-style: solid;
-  border-right-width: 2px;
-  border-right-color: #D3D3D3;
-  padding-left: 5px;
-  padding-right: 5px;
-  vertical-align: top;
-}
-
-#nmiqecejaw .gt_row_group_first td {
-  border-top-width: 2px;
-}
-
-#nmiqecejaw .gt_row_group_first th {
-  border-top-width: 2px;
-}
-
-#nmiqecejaw .gt_summary_row {
-  color: #333333;
-  background-color: #FFFFFF;
-  text-transform: inherit;
-  padding-top: 8px;
-  padding-bottom: 8px;
-  padding-left: 5px;
-  padding-right: 5px;
-}
-
-#nmiqecejaw .gt_first_summary_row {
-  border-top-style: solid;
-  border-top-color: #D3D3D3;
-}
-
-#nmiqecejaw .gt_first_summary_row.thick {
-  border-top-width: 2px;
-}
-
-#nmiqecejaw .gt_last_summary_row {
-  padding-top: 8px;
-  padding-bottom: 8px;
-  padding-left: 5px;
-  padding-right: 5px;
-  border-bottom-style: solid;
-  border-bottom-width: 2px;
-  border-bottom-color: #D3D3D3;
-}
-
-#nmiqecejaw .gt_grand_summary_row {
-  color: #333333;
-  background-color: #FFFFFF;
-  text-transform: inherit;
-  padding-top: 8px;
-  padding-bottom: 8px;
-  padding-left: 5px;
-  padding-right: 5px;
-}
-
-#nmiqecejaw .gt_first_grand_summary_row {
-  padding-top: 8px;
-  padding-bottom: 8px;
-  padding-left: 5px;
-  padding-right: 5px;
-  border-top-style: double;
-  border-top-width: 6px;
-  border-top-color: #D3D3D3;
-}
-
-#nmiqecejaw .gt_last_grand_summary_row_top {
-  padding-top: 8px;
-  padding-bottom: 8px;
-  padding-left: 5px;
-  padding-right: 5px;
-  border-bottom-style: double;
-  border-bottom-width: 6px;
-  border-bottom-color: #D3D3D3;
-}
-
-#nmiqecejaw .gt_striped {
-  background-color: rgba(128, 128, 128, 0.05);
-}
-
-#nmiqecejaw .gt_table_body {
-  border-top-style: solid;
-  border-top-width: 2px;
-  border-top-color: #D3D3D3;
-  border-bottom-style: solid;
-  border-bottom-width: 2px;
-  border-bottom-color: #D3D3D3;
-}
-
-#nmiqecejaw .gt_footnotes {
-  color: #333333;
-  background-color: #FFFFFF;
-  border-bottom-style: none;
-  border-bottom-width: 2px;
-  border-bottom-color: #D3D3D3;
-  border-left-style: none;
-  border-left-width: 2px;
-  border-left-color: #D3D3D3;
-  border-right-style: none;
-  border-right-width: 2px;
-  border-right-color: #D3D3D3;
-}
-
-#nmiqecejaw .gt_footnote {
-  margin: 0px;
-  font-size: 90%;
-  padding-top: 4px;
-  padding-bottom: 4px;
-  padding-left: 5px;
-  padding-right: 5px;
-}
-
-#nmiqecejaw .gt_sourcenotes {
-  color: #333333;
-  background-color: #FFFFFF;
-  border-bottom-style: none;
-  border-bottom-width: 2px;
-  border-bottom-color: #D3D3D3;
-  border-left-style: none;
-  border-left-width: 2px;
-  border-left-color: #D3D3D3;
-  border-right-style: none;
-  border-right-width: 2px;
-  border-right-color: #D3D3D3;
-}
-
-#nmiqecejaw .gt_sourcenote {
-  font-size: 90%;
-  padding-top: 4px;
-  padding-bottom: 4px;
-  padding-left: 5px;
-  padding-right: 5px;
-}
-
-#nmiqecejaw .gt_left {
-  text-align: left;
-}
-
-#nmiqecejaw .gt_center {
-  text-align: center;
-}
-
-#nmiqecejaw .gt_right {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-#nmiqecejaw .gt_font_normal {
-  font-weight: normal;
-}
-
-#nmiqecejaw .gt_font_bold {
-  font-weight: bold;
-}
-
-#nmiqecejaw .gt_font_italic {
-  font-style: italic;
-}
-
-#nmiqecejaw .gt_super {
-  font-size: 65%;
-}
-
-#nmiqecejaw .gt_footnote_marks {
-  font-size: 75%;
-  vertical-align: 0.4em;
-  position: initial;
-}
-
-#nmiqecejaw .gt_asterisk {
-  font-size: 100%;
-  vertical-align: 0;
-}
-
-#nmiqecejaw .gt_indent_1 {
-  text-indent: 5px;
-}
-
-#nmiqecejaw .gt_indent_2 {
-  text-indent: 10px;
-}
-
-#nmiqecejaw .gt_indent_3 {
-  text-indent: 15px;
-}
-
-#nmiqecejaw .gt_indent_4 {
-  text-indent: 20px;
-}
-
-#nmiqecejaw .gt_indent_5 {
-  text-indent: 25px;
-}
-
-#nmiqecejaw .katex-display {
-  display: inline-flex !important;
-  margin-bottom: 0.75em !important;
-}
-
-#nmiqecejaw div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
-  height: 0px !important;
-}
-</style>
-
-<table class="gt_table caption-top" data-quarto-postprocess="true" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
-<caption>Benchmarking speed of ML computations</caption>
-<thead>
-<tr class="header gt_col_headings gt_spanner_row">
-<th rowspan="2" id="Grid Size" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col">Grid Size</th>
-<th rowspan="2" id="Exact" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col">Exact</th>
-<th colspan="2" id="Folded" class="gt_center gt_columns_top_border gt_column_spanner_outer" data-quarto-table-cell-role="th" scope="colgroup"><span class="gt_column_spanner">Folded</span></th>
-</tr>
-<tr class="odd gt_col_headings">
-<th id="Time" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col">Time</th>
-<th id="Speed-Up" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col">Speed-Up</th>
-</tr>
-</thead>
-<tbody class="gt_table_body">
-<tr class="odd">
-<td class="gt_row gt_left" headers="dim">10 x 10</td>
-<td class="gt_row gt_left" headers="Exact">6.86ms</td>
-<td class="gt_row gt_left" headers="fold">2.42ms</td>
-<td class="gt_row gt_left" headers="d_1">2.84x</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="dim">20 x 20</td>
-<td class="gt_row gt_left" headers="Exact">15.42ms</td>
-<td class="gt_row gt_left" headers="fold">7.64ms</td>
-<td class="gt_row gt_left" headers="d_1">2.02x</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="dim">30 x 30</td>
-<td class="gt_row gt_left" headers="Exact">35.02ms</td>
-<td class="gt_row gt_left" headers="fold">12.13ms</td>
-<td class="gt_row gt_left" headers="d_1">2.89x</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="dim">40 x 40</td>
-<td class="gt_row gt_left" headers="Exact">75.03ms</td>
-<td class="gt_row gt_left" headers="fold">19.43ms</td>
-<td class="gt_row gt_left" headers="d_1">3.86x</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="dim">50 x 50</td>
-<td class="gt_row gt_left" headers="Exact">150.24ms</td>
-<td class="gt_row gt_left" headers="fold">28.68ms</td>
-<td class="gt_row gt_left" headers="d_1">5.24x</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="dim">60 x 60</td>
-<td class="gt_row gt_left" headers="Exact">284.12ms</td>
-<td class="gt_row gt_left" headers="fold">40.26ms</td>
-<td class="gt_row gt_left" headers="d_1">7.06x</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_left" headers="dim">70 x 70</td>
-<td class="gt_row gt_left" headers="Exact">485.3ms</td>
-<td class="gt_row gt_left" headers="fold">54.8ms</td>
-<td class="gt_row gt_left" headers="d_1">8.86x</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_left" headers="dim">80 x 80</td>
-<td class="gt_row gt_left" headers="Exact">754.37ms</td>
-<td class="gt_row gt_left" headers="fold">74.66ms</td>
-<td class="gt_row gt_left" headers="d_1">10.1x</td>
-</tr>
-</tbody>
-</table>
-
-</div>
-</div>
-</div>
-</div></div>
 </section>
 <section id="approximating-the-correlation-matrix" class="slide level2">
 <h2>Approximating the Correlation Matrix</h2>
@@ -2027,50 +1735,50 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
 <h2>Data Generation</h2>
 <div class="columns" style="font-size:60%">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a></a>tictoc<span class="sc">::</span><span class="fu">tic</span>()</span>
-<span id="cb5-2"><a></a>X <span class="ot">&lt;-</span> <span class="fu">rmatern_copula_folded_full</span>(<span class="at">n =</span> <span class="dv">100</span>, <span class="at">dim1 =</span> <span class="dv">400</span>, <span class="at">dim2 =</span> <span class="dv">180</span>, <span class="at">rho1 =</span> <span class="fl">0.8</span>, <span class="at">rho2 =</span> <span class="fl">0.9</span>, <span class="at">nu =</span> <span class="dv">2</span>)</span>
-<span id="cb5-3"><a></a>tictoc<span class="sc">::</span><span class="fu">toc</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a></a>tictoc<span class="sc">::</span><span class="fu">tic</span>()</span>
+<span id="cb14-2"><a></a>X <span class="ot">&lt;-</span> <span class="fu">rmatern_copula_folded_full</span>(<span class="at">n =</span> <span class="dv">100</span>, <span class="at">dim1 =</span> <span class="dv">400</span>, <span class="at">dim2 =</span> <span class="dv">180</span>, <span class="at">rho1 =</span> <span class="fl">0.8</span>, <span class="at">rho2 =</span> <span class="fl">0.9</span>, <span class="at">nu =</span> <span class="dv">2</span>)</span>
+<span id="cb14-3"><a></a>tictoc<span class="sc">::</span><span class="fu">toc</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>1.334 sec elapsed</code></pre>
+<pre><code>1.232 sec elapsed</code></pre>
 </div>
 </div><div class="column" style="width:50%;text-align:center;">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a></a><span class="fu">plot_matern</span>(X[, <span class="dv">1</span>], <span class="dv">400</span>, <span class="dv">180</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a></a><span class="fu">plot_matern</span>(X[, <span class="dv">1</span>], <span class="dv">400</span>, <span class="dv">180</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure>
-<p><img data-src="index_files/figure-revealjs/unnamed-chunk-7-1.png" style="width:80.0%"></p>
+<p><img data-src="index_files/figure-revealjs/unnamed-chunk-21-1.png" style="width:80.0%"></p>
 </figure>
 </div>
 </div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a></a><span class="fu">plot_matern</span>(X[, <span class="dv">2</span>], <span class="dv">400</span>, <span class="dv">180</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a></a><span class="fu">plot_matern</span>(X[, <span class="dv">2</span>], <span class="dv">400</span>, <span class="dv">180</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure>
-<p><img data-src="index_files/figure-revealjs/unnamed-chunk-8-1.png" style="width:80.0%"></p>
+<p><img data-src="index_files/figure-revealjs/unnamed-chunk-22-1.png" style="width:80.0%"></p>
 </figure>
 </div>
 </div>
 </div>
 </div><div class="column" style="width:50%;">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a></a><span class="fu">apply</span>(X, <span class="dv">1</span>, var) <span class="sc">|&gt;</span> <span class="fu">hist</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a></a><span class="fu">apply</span>(X, <span class="dv">1</span>, var) <span class="sc">|&gt;</span> <span class="fu">hist</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure>
-<p><img data-src="index_files/figure-revealjs/unnamed-chunk-9-1.png" style="width:80.0%"></p>
+<p><img data-src="index_files/figure-revealjs/unnamed-chunk-23-1.png" style="width:80.0%"></p>
 </figure>
 </div>
 </div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a></a><span class="fu">apply</span>(X, <span class="dv">1</span>, mean) <span class="sc">|&gt;</span> <span class="fu">hist</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a></a><span class="fu">apply</span>(X, <span class="dv">1</span>, mean) <span class="sc">|&gt;</span> <span class="fu">hist</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure>
-<p><img data-src="index_files/figure-revealjs/unnamed-chunk-10-1.png" style="width:80.0%"></p>
+<p><img data-src="index_files/figure-revealjs/unnamed-chunk-24-1.png" style="width:80.0%"></p>
 </figure>
 </div>
 </div>
@@ -2107,7 +1815,7 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
 </section>
 <section id="references" class="title-slide slide level1 smaller scrollable">
 <h1>References</h1>
-<div id="refs" class="references csl-bib-body" style="font-size:60%" data-entry-spacing="0" role="list">
+<div id="refs" class="references csl-bib-body" style="font-size:55%" data-entry-spacing="0" role="list">
 <div id="ref-metoffi" class="csl-entry" role="listitem">
 <div class="csl-left-margin">1. </div><div class="csl-right-inline">Centre for Environmental Data Analysis, <a href="https://catalogue.ceda.ac.uk/uuid/e304987739e04cdc960598fa5e4439d0/">Met office hadley centre (2019): UKCP local projections on a 5km grid over the UK for 1980-2080.</a> (n.d.).</div>
 </div>
@@ -2132,17 +1840,29 @@ u_i &amp;= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
 <div id="ref-simpson2015" class="csl-entry" role="listitem">
 <div class="csl-left-margin">8. </div><div class="csl-right-inline">D. P. Simpson, H. Rue, T. G. Martins, A. Riebler, &amp; S. H. Sørbye, <a href="http://arxiv.org/abs/1403.4630">Penalising model component complexity: A principled, practical approach to constructing priors</a>. (2015).</div>
 </div>
+<div id="ref-morris2019" class="csl-entry" role="listitem">
+<div class="csl-left-margin">9. </div><div class="csl-right-inline">M. Morris, K. Wheeler-Martin, D. Simpson, S. J. Mooney, A. Gelman, &amp; C. DiMaggio, Bayesian hierarchical spatial models: Implementing the Besag York Mollié model in stan. <em>Spatial and Spatio-temporal Epidemiology</em>, <strong>31</strong> (2019) 100301. https://doi.org/<a href="https://doi.org/10.1016/j.sste.2019.100301">10.1016/j.sste.2019.100301</a>.</div>
+</div>
 <div id="ref-lindgren2011" class="csl-entry" role="listitem">
-<div class="csl-left-margin">9. </div><div class="csl-right-inline">F. Lindgren, H. Rue, &amp; J. Lindström, An explicit link between Gaussian fields and Gaussian Markov random fields: the stochastic partial differential equation approach. <em>Journal of the Royal Statistical Society: Series B (Statistical Methodology)</em>, <strong>73</strong> (2011) 423–498. https://doi.org/<a href="https://doi.org/10.1111/j.1467-9868.2011.00777.x">10.1111/j.1467-9868.2011.00777.x</a>.</div>
+<div class="csl-left-margin">10. </div><div class="csl-right-inline">F. Lindgren, H. Rue, &amp; J. Lindström, An explicit link between Gaussian fields and Gaussian Markov random fields: the stochastic partial differential equation approach. <em>Journal of the Royal Statistical Society: Series B (Statistical Methodology)</em>, <strong>73</strong> (2011) 423–498. https://doi.org/<a href="https://doi.org/10.1111/j.1467-9868.2011.00777.x">10.1111/j.1467-9868.2011.00777.x</a>.</div>
+</div>
+<div id="ref-rue2005a" class="csl-entry" role="listitem">
+<div class="csl-left-margin">11. </div><div class="csl-right-inline">H. Rue, Marginal variances for gaussian markov random fields. (2005).</div>
+</div>
+<div id="ref-rue2007" class="csl-entry" role="listitem">
+<div class="csl-left-margin">12. </div><div class="csl-right-inline">Hå. Rue &amp; S. Martino, Approximate bayesian inference for hierarchical gaussian markov random field models. <em>Journal of Statistical Planning and Inference</em>, <strong>137</strong> (2007) 3177–3192. https://doi.org/<a href="https://doi.org/10.1016/j.jspi.2006.07.016">10.1016/j.jspi.2006.07.016</a>.</div>
+</div>
+<div id="ref-rue2009" class="csl-entry" role="listitem">
+<div class="csl-left-margin">13. </div><div class="csl-right-inline">H. Rue, S. Martino, &amp; N. Chopin, Approximate Bayesian inference for latent Gaussian models by using integrated nested Laplace approximations. <em>Journal of the Royal Statistical Society: Series B (Statistical Methodology)</em>, <strong>71</strong> (2009) 319–392. https://doi.org/<a href="https://doi.org/10.1111/j.1467-9868.2008.00700.x">10.1111/j.1467-9868.2008.00700.x</a>.</div>
 </div>
 <div id="ref-horn1991" class="csl-entry" role="listitem">
-<div class="csl-left-margin">10. </div><div class="csl-right-inline">R. A. Horn &amp; C. R. Johnson, <em><a href="https://www.cambridge.org/core/books/topics-in-matrix-analysis/B988495A235F1C3406EA484A2C477B03">Topics in matrix analysis</a></em> (Cambridge: Cambridge University Press, 1991).</div>
+<div class="csl-left-margin">14. </div><div class="csl-right-inline">R. A. Horn &amp; C. R. Johnson, <em><a href="https://www.cambridge.org/core/books/topics-in-matrix-analysis/B988495A235F1C3406EA484A2C477B03">Topics in matrix analysis</a></em> (Cambridge: Cambridge University Press, 1991).</div>
 </div>
 <div id="ref-kent2022" class="csl-entry" role="listitem">
-<div class="csl-left-margin">11. </div><div class="csl-right-inline">J. T. Kent &amp; K. V. Mardia, <em>Spatial Analysis</em> (John Wiley &amp; Sons, 2022).</div>
+<div class="csl-left-margin">15. </div><div class="csl-right-inline">J. T. Kent &amp; K. V. Mardia, <em>Spatial Analysis</em> (John Wiley &amp; Sons, 2022).</div>
 </div>
 <div id="ref-mondal2018" class="csl-entry" role="listitem">
-<div class="csl-left-margin">12. </div><div class="csl-right-inline">D. Mondal, On edge correction of conditional and intrinsic autoregressions. <em>Biometrika</em>, <strong>105</strong> (2018) 447–454. https://doi.org/<a href="https://doi.org/10.1093/biomet/asy014">10.1093/biomet/asy014</a>.</div>
+<div class="csl-left-margin">16. </div><div class="csl-right-inline">D. Mondal, On edge correction of conditional and intrinsic autoregressions. <em>Biometrika</em>, <strong>105</strong> (2018) 447–454. https://doi.org/<a href="https://doi.org/10.1093/biomet/asy014">10.1093/biomet/asy014</a>.</div>
 </div>
 </div>
 

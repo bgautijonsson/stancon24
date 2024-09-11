@@ -84,15 +84,17 @@ tuple(matrix, vector) ar1_precision_eigen(int n, real rho) {
 
   @return The log probability density
 */
-real matern_copula_exact_lpdf(matrix Z, tuple(matrix, vector) E1, tuple(matrix, vector) E2, int nu) {
+real matern_copula_exact_lpdf(matrix Z, int dim1, real rho1, int dim2, real rho2, int nu) {
   int n_obs = cols(Z);
-  int dim1 = cols(E1.1);
-  int dim2 = cols(E2.1);
   int D = dim1 * dim2;
-  vector[D] marginal_sds = marginal_sd(E1, E2, nu);
+  tuple(matrix[dim1, dim1], vector[dim1]) E1 = ar1_precision_eigen(dim1, rho1);
+  tuple(matrix[dim2, dim2], vector[dim2]) E2 = ar1_precision_eigen(dim2, rho2);
+
 
   real log_det = 0;
   real quadform_sum = 0;
+
+  vector[D] marginal_sds = marginal_sd(E1, E2, nu);
 
   for (i in 1:dim1) {
     for (j in 1:dim2) {
@@ -125,11 +127,11 @@ real matern_copula_exact_lpdf(matrix Z, tuple(matrix, vector) E1, tuple(matrix, 
 
   @return The log probability density
 */
-real matern_exact_lpdf(matrix Z, tuple(matrix, vector) E1, tuple(matrix, vector) E2, int nu) {
+real matern_exact_lpdf(matrix Z, int dim1, real rho1, int dim2, real rho2, int nu) {
   int n_obs = cols(Z);
-  int dim1 = cols(E1.1);
-  int dim2 = cols(E2.1);
   int D = dim1 * dim2;
+  tuple(matrix[dim1, dim1], vector[dim1]) E1 = ar1_precision_eigen(dim1, rho1);
+  tuple(matrix[dim2, dim2], vector[dim2]) E2 = ar1_precision_eigen(dim2, rho2);
 
   real log_det = 0;
   real quadform_sum = 0;

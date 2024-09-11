@@ -5,10 +5,10 @@ functions {
 }
 
 data {
-  int dim1;
-  int dim2;
-  int nu;
-  int n_obs;
+  int<lower = 1> dim1;
+  int<lower = 1> dim2;
+  int<lower = 0> nu;
+  int<lower = 1> n_obs;
   matrix[dim1 * dim2, n_obs] y;
 }
 
@@ -24,25 +24,23 @@ parameters {
   real<lower = 0, upper = min_y + sigma/xi> mu;
 }
 
-transformed parameters {
-  tuple(matrix[dim1, dim1], vector[dim1]) E1 = ar1_precision_eigen(dim1, rho[1]);
-  tuple(matrix[dim2, dim2], vector[dim2]) E2 = ar1_precision_eigen(dim2, rho[2]);
-}
-
 model {
-  matrix[D, n_obs] u;
+  matrix[D, n_obs] Z;
 
-  for (i in 1:D) {
-    for (j in 1:n_obs) {
-      u[i, j] = gev_cdf(y[i, j] | mu, sigma, xi);
-      target+= gev_lpdf(y[i, j] | mu, sigma, xi);
+  profile("gev") {
+    target += gev_lpdf(to_vector(y) | mu, sigma, xi);
+    for (i in 1:D) {
+      for (j in 1:n_obs) {
+        Z[i, j] = inv_Phi(gev_cdf(y[i, j] | mu, sigma, xi));
+      }
     }
   }
 
-  matrix[D, n_obs] Z = inv_Phi(u);
-
-  target += matern_copula_exact_lpdf(Z | E1, E2, nu);
+  profile("matern_copula_exact_lpdf") {
+    target += matern_copula_exact_lpdf(Z | dim1, rho[1], dim2, rho[2], nu);
+  }
 
   // Priors
-  target += priors(mu, sigma, xi, rho);
+  target += exponential_lpdf(xi | 1);
+  target += beta_lpdf(rho | 1, 1);
 }

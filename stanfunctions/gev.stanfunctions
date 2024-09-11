@@ -2,32 +2,23 @@
 This function computes the CDF of the Generalized Extreme Value distribution.
 */
 real gev_cdf(real y, real mu, real sigma, real xi) {
-  if (abs(xi) < 1e-10) {
-    real z = (y - mu) / sigma;
-    return exp(-exp(z));
+  if (abs(xi) < 1e-8) {
+    return exp(-exp((y - mu) / sigma));
   } else {
-    real z = 1 + xi * (y - mu) / sigma;
-    if (z > 0) {
-      return exp(-pow(z, -1/xi));
-    } else {
-      reject("Found incompatible GEV parameter values");
-    }
+    return exp(-pow(1 + xi * (y - mu) / sigma, -1/xi));
   }
 }
 
 /*
 This function computes the log-pdf of the Generalized Extreme Value distribution.
 */
-real gev_lpdf(real y, real mu, real sigma, real xi) {
-  if (abs(xi) < 1e-10) {
-    real z = (y - mu) / sigma;
-    return -log(sigma) - z - exp(-z);
+real gev_lpdf(vector y, real mu, real sigma, real xi) {
+  vector[rows(y)] z;
+  if (abs(xi) < 1e-8) {
+    z = (y - mu) / sigma;
+    return sum(-log(sigma) - z - exp(-z));
   } else {
-    real z = 1 + xi * (y - mu) / sigma;
-    if (z > 0) {
-      return -log(sigma) - (1 + 1/xi) * log(z) - pow(z, -1/xi);
-    } else {
-      reject("Found incompatible GEV parameter values");
-    }
+    z = 1 + xi * (y - mu) / sigma;
+    return sum(-log(sigma) - (1 + 1/xi) * log(z) - pow(z, -1/xi));
   }
 }

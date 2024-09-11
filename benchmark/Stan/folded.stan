@@ -31,39 +31,32 @@ transformed parameters {
 }
 
 model {
-  matrix[D, n_obs] u;
-
+  matrix[D, n_obs] Z;
+  
+  target+= gev_lpdf(to_vector(y) | mu, sigma, xi);
   for (i in 1:D) {
     for (j in 1:n_obs) {
-      u[i, j] = gev_cdf(y[i, j] | mu, sigma, xi);
-      target+= gev_lpdf(y[i, j] | mu, sigma, xi);
+      Z[i, j] = inv_Phi(gev_cdf(y[i, j] | mu, sigma, xi));
     }
   }
-  
-  // Likelihood
-  matrix[D, n_obs] Z = inv_Phi(u);
-  for (i in 1:n_obs) {
-    target += matern_circulant_copula_lpdf(fold_data(Z[ , i], dim1, dim2) | eigs) / 4.0;
-  }
+
+  target += matern_folded_copula_eigenvalues_lpdf(Z | eigs) / 4.0;
 
   // Priors
   target += priors(mu, sigma, xi, rho);
 }
 
 generated quantities {
-  matrix[D, n_obs] u;
   real log_lik = 0;
+  {
+    matrix[D, n_obs] Z;
 
-  for (i in 1:D) {
-    for (j in 1:n_obs) {
-      u[i, j] = gev_cdf(y_test[i, j] | mu, sigma, xi);
-      log_lik += gev_lpdf(y_test[i, j] | mu, sigma, xi);
+    log_lik += gev_lpdf(to_vector(y_test) | mu, sigma, xi);
+    for (i in 1:D) {
+      for (j in 1:n_obs) {
+        Z[i, j] = inv_Phi(gev_cdf(y_test[i, j] | mu, sigma, xi));
+      }
     }
-  }
-  
-  // Likelihood
-  matrix[D, n_obs] Z = inv_Phi(u);
-  for (i in 1:n_obs) {
-    log_lik += matern_circulant_copula_lpdf(fold_data(Z[ , i], dim1, dim2) | eigs) / 4.0;
+    log_lik += matern_folded_copula_eigenvalues_lpdf(Z | eigs) / 4.0;
   }
 }

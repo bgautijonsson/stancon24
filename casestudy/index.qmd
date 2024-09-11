@@ -23,6 +23,7 @@ library(cmdstanr)
 library(tidyverse)
 library(evd)
 library(patchwork)
+library(here)
 
 theme_set(bggjphd::theme_bggj())
 register_knitr_engine(override = TRUE)
@@ -46,18 +47,20 @@ register_knitr_engine(override = TRUE)
 ## Sampling from the copula
 
 ```{r}
-dim <- c(30, 20)
+dim <- c(20, 20)
 rho <- c(0.7, 0.9)
 nu <- 2
-n_obs <- 10
+n_obs <- 20
 mu <- 6
 sigma <- 2
 xi <- 0.1
 
+set.seed(1)
 Z <- rmatern_copula(n_obs, dim, rho, nu)
 U <- pnorm(Z)
 Y <- qgev(U, loc = mu, scale = sigma, shape = xi)
 ```
+
 
 
 ```{r}
@@ -94,7 +97,7 @@ tibble(
         scale_fill_viridis_c() +
         coord_cartesian(expand = FALSE) +
         theme(
-          legend.position = "none"
+          legend.position = "top"
         ) +
         labs(
           x = NULL,
@@ -114,10 +117,11 @@ tibble(
 
 ```{r}
 #| eval: false
-folded <- cmdstanr::cmdstan_model(
-  here::here("casestudy", "Stan", "folded.stan"),
+exact <- cmdstanr::cmdstan_model(
+  here::here("casestudy", "Stan", "exact.stan"),
   include_paths = here::here("stanfunctions"),
-  quiet = TRUE
+  quiet = TRUE,
+  force_recompile = TRUE
 )
 ```
 
@@ -135,15 +139,23 @@ gev_fit <- evd::fgev(Y)$estimate
 inits <- list(
   mu = gev_fit[1],
   sigma = gev_fit[2],
-  xi = pmax(gev_fit[3], 0),
+  xi = pmax(gev_fit[3], 1e-3),
   rho = c(0.5, 0.5)
 )
 
 
-results <- folded$sample(
+results <- exact$sample(
   data = stan_data,
   chains = 4,
   parallel_chains = 4,
   init = list(inits, inits, inits, inits)
 )
+results$save_object(here("casestudy", "results", "fit.rds"))
+```
+
+
+
+```{r}
+results <- readRDS(here("casestudy", "results", "fit.rds"))
+results$summary()
 ```

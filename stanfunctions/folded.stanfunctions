@@ -22,3 +22,48 @@ vector fold_data(vector x, int n1, int n2) {
   }
   return folded;
 }
+
+/*
+  Computes the log probability density of a Matérn copula that's approximated
+  with a block circulant matrix with circulant blocks.
+
+  @param Z The vector of standard normal variates
+  @param sqrt_eigs The square root of the eigenvalues of the precision matrix
+
+  @return The log probability density
+*/
+real matern_folded_copula_lpdf(matrix Z, int dim1, int dim2, real rho1, real rho2, int nu) {
+  int n_obs = cols(Z);
+  complex_matrix[2 * dim2, 2 * dim1] eigs = create_base_matrix_and_rescale_eigenvalues(2 * dim1, 2 * dim2, rho1, rho2, nu);
+  real quad_forms = 0;
+  real log_det = sum(log(get_real(eigs)));
+  for (i in 1:n_obs) {
+    vector[4 * dim1 * dim2] Z_fold = fold_data(Z[, i], dim1, dim2);
+    vector[4 * dim1 * dim2] Qz = matvec_prod(eigs, Z_fold);
+    quad_forms += dot_product(Z_fold, Qz) - dot_self(Z_fold);
+  } 
+  return - 0.5 * (quad_forms - n_obs * log_det);
+}
+
+/*
+  Computes the log probability density of a Matérn copula that's approximated
+  with a block circulant matrix with circulant blocks.
+
+  @param Z The vector of standard normal variates
+  @param sqrt_eigs The square root of the eigenvalues of the precision matrix
+
+  @return The log probability density
+*/
+real matern_folded_copula_eigenvalues_lpdf(matrix Z, complex_matrix eigs) {
+  int n_obs = cols(Z);
+  int dim1 = cols(eigs);
+  int dim2 = rows(eigs);
+  real quad_forms = 0;
+  real log_det = sum(log(get_real(eigs)));
+  for (i in 1:n_obs) {
+    vector[dim1 * dim2] Z_fold = fold_data(Z[, i], dim1 %/% 2, dim2 %/% 2);
+    vector[dim1 * dim2] Qz = matvec_prod(eigs, Z_fold);
+    quad_forms += dot_product(Z_fold, Qz) - dot_self(Z_fold);
+  } 
+  return - 0.5 * (quad_forms - n_obs * log_det);
+}

@@ -30,21 +30,22 @@ transformed parameters {
 }
 
 model {
-  matrix[D, n_obs] u;
+  matrix[D, n_obs] Z;
+
+  target += gev_lpdf(to_vector(y) | mu, sigma, xi);
 
   for (i in 1:D) {
     for (j in 1:n_obs) {
-      u[i, j] = gev_cdf(y[i, j] | mu, sigma, xi);
-      target+= gev_lpdf(y[i, j] | mu, sigma, xi);
+      Z[i, j] = inv_Phi(gev_cdf(y[i, j] | mu, sigma, xi));
     }
   }
   
   // Likelihood
-  matrix[D, n_obs] Z = inv_Phi(u);
-  for (i in 1:n_obs) {
-    target += matern_circulant_copula_lpdf(fold_data(Z[ , i], dim1, dim2) | eigs) / 4.0;
-  }
+  target += matern_circulant_copula_lpdf(Z | dim1, dim2, rho[1], rho[2], nu) / 4;
 
   // Priors
   target += priors(mu, sigma, xi, rho);
+}
+
+generated quantities {
 }

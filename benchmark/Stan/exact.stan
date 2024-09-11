@@ -25,41 +25,36 @@ parameters {
   real<lower = 0, upper = min_y + sigma/xi> mu;
 }
 
-transformed parameters {
-  tuple(matrix[dim1, dim1], vector[dim1]) E1 = ar1_precision_eigen(dim1, rho[1]);
-  tuple(matrix[dim2, dim2], vector[dim2]) E2 = ar1_precision_eigen(dim2, rho[2]);
-}
-
 model {
-  matrix[D, n_obs] u;
+  matrix[D, n_obs] Z;
 
+  target += gev_lpdf(to_vector(y) | mu, sigma, xi);
   for (i in 1:D) {
     for (j in 1:n_obs) {
-      u[i, j] = gev_cdf(y[i, j] | mu, sigma, xi);
-      target+= gev_lpdf(y[i, j] | mu, sigma, xi);
+      Z[i, j] = inv_Phi(gev_cdf(y[i, j] | mu, sigma, xi));
     }
   }
 
-  matrix[D, n_obs] Z = inv_Phi(u);
-
-  target += matern_copula_exact_lpdf(Z | E1, E2, nu);
+  target += matern_copula_exact_lpdf(Z | dim1, rho[1], dim2, rho[2], nu);
 
   // Priors
-  target += priors(mu, sigma, xi, rho);
+  target += exponential_lpdf(xi | 1);
+  target += std_normal_lpdf(rho);
 }
 
+
 generated quantities {
-  matrix[D, n_obs] u;
-  matrix[D, n_obs] Z;
   real log_lik = 0;
-
-  for (i in 1:D) {
-    for (j in 1:n_obs) {
-      u[i, j] = gev_cdf(y_test[i, j] | mu, sigma, xi);
-      log_lik += gev_lpdf(y_test[i, j] | mu, sigma, xi);
+  {
+    matrix[D, n_obs] Z;
+    
+    log_lik += gev_lpdf(to_vector(y_test) | mu, sigma, xi);
+    for (i in 1:D) {
+      for (j in 1:n_obs) {
+        Z[i, j] = inv_Phi(gev_cdf(y_test[i, j] | mu, sigma, xi));
+      }
     }
-  }
 
-  Z = inv_Phi(u);
-  log_lik += matern_copula_exact_lpdf(Z | E1, E2, nu);
+    log_lik += matern_copula_exact_lpdf(Z | dim1, rho[1], dim2, rho[2], nu);
+  }
 }

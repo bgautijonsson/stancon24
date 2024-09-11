@@ -1,3 +1,42 @@
+#' Fit i.i.d. model
+#'
+#' This function fits an i.i.d. model using Stan,
+#' assuming independence between observations
+#' conditional on the GEV parameters
+#'
+#' @param stan_data A list containing the data for Stan
+#' @param inits A list of initial values for the parameters
+#' @param recomp Logical, whether to recompile the Stan model
+#'
+#' @return A tibble with parameter estimates and diagnostics
+#' @export
+fit_iid <- function(stan_data, inits, recomp = FALSE) {
+  iid <- cmdstanr::cmdstan_model(
+    here::here("benchmark", "Stan", "iid.stan"),
+    include_paths = here::here("stanfunctions"),
+    force_recompile = recomp,
+    quiet = TRUE
+  )
+
+  iid_results <- iid$sample(
+    data = stan_data,
+    chains = 4,
+    parallel_chains = 4,
+    init = list(inits, inits, inits, inits)
+  )
+
+  iid_results$summary(c("mu", "xi", "sigma", "log_lik")) |>
+    dplyr::select(variable, median, rhat, ess_bulk, ess_tail) |>
+    dplyr::mutate_if(is.numeric, round, 2) |>
+    dplyr::mutate(
+      time = iid_results$time()$total,
+      model = "iid"
+    )
+}
+
+
+
+
 #' Fit exact Matérn model
 #'
 #' This function fits an exact Matérn model using Stan
@@ -10,7 +49,7 @@
 #' @export
 fit_exact <- function(stan_data, inits, recomp = FALSE) {
   exact <- cmdstanr::cmdstan_model(
-    here::here("benchmarks", "gev_margins", "Stan", "exact.stan"),
+    here::here("benchmark", "Stan", "exact.stan"),
     include_paths = here::here("stanfunctions"),
     force_recompile = recomp,
     quiet = TRUE
@@ -45,7 +84,7 @@ fit_exact <- function(stan_data, inits, recomp = FALSE) {
 #' @export
 fit_folded <- function(stan_data, inits, recomp = FALSE) {
   folded <- cmdstanr::cmdstan_model(
-    here::here("benchmarks", "gev_margins", "Stan", "folded.stan"),
+    here::here("benchmark", "Stan", "folded.stan"),
     include_paths = here::here("stanfunctions"),
     force_recompile = recomp,
     quiet = TRUE
@@ -79,7 +118,7 @@ fit_folded <- function(stan_data, inits, recomp = FALSE) {
 #' @export
 fit_circulant <- function(stan_data, inits, recomp = FALSE) {
   circulant <- cmdstanr::cmdstan_model(
-    here::here("benchmarks", "gev_margins", "Stan", "circulant.stan"),
+    here::here("benchmark", "Stan", "circulant.stan"),
     include_paths = here::here("stanfunctions"),
     force_recompile = recomp,
     quiet = TRUE
@@ -171,13 +210,15 @@ fit_all <- function(n_obs, dim, rho, nu, pars, recomp = FALSE) {
   inits <- data$inits
 
   exact_results <- fit_exact(stan_data, inits, recomp)
-  circulant_results <- fit_circulant(stan_data, inits, recomp)
-  folded_results <- fit_folded(stan_data, inits, recomp)
+  # circulant_results <- fit_circulant(stan_data, inits, recomp)
+  # folded_results <- fit_folded(stan_data, inits, recomp)
+  iid_results <- fit_iid(stan_data, inits, recomp)
 
   res <- dplyr::bind_rows(
     exact = exact_results,
-    circulant = circulant_results,
-    folded = folded_results
+    # circulant = circulant_results,
+    # folded = folded_results,
+    iid = iid_results
   ) |>
     dplyr::left_join(
       dplyr::tibble(
@@ -206,8 +247,7 @@ fit_all <- function(n_obs, dim, rho, nu, pars, recomp = FALSE) {
 #' @export
 save_results <- function(res) {
   cur_results <- here::here(
-    "benchmarks",
-    "gev_margins",
+    "benchmark",
     "results"
   ) |>
     list.files() |>
@@ -216,8 +256,7 @@ save_results <- function(res) {
   max_iter <- max(cur_results, default = 0)
 
   out_path <- here::here(
-    "benchmarks",
-    "gev_margins",
+    "benchmark",
     "results",
     glue::glue("iter={max_iter + 1}")
   )

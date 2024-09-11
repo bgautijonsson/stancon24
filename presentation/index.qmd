@@ -1,6 +1,6 @@
 ---
-title: "Copulas in Stan"
-subtitle: "Data-Level Dependence in Generalized Extreme Value Distributions"
+title: "Gaussian Copulas for Large Spatial Fields"
+subtitle: "Modeling Data-Level Spatial Dependence in Multivariate Generalized Extreme Value Distributions"
 author: "Brynjólfur Gauti Guðrúnar Jónsson"
 institute: "University of Iceland"
 format: 
@@ -26,12 +26,269 @@ library(stdmatern)
 library(INLA)
 library(gt)
 library(tidyverse)
+library(evd)
+library(sparseMVN)
+library(bggjphd)
+theme_set(theme_bggj())
 options(width = 648)
 ```
 
+## Example {data-name="Copulas"}
+
+```{r}
+#| echo: true
+Q <- make_AR_prec_matrix(dim = 60, rho = 0.9)
+Z <- rmvn.sparse(n = 1, mu = rep(0, nrow(Q)), CH = Cholesky(Q)) |> 
+  as.numeric()
+```
+
+```{r}
+#| echo: false
+tibble(
+  Z = Z
+) |>
+  mutate(
+    time = row_number()
+  ) |>
+  ggplot(aes(x = time, y = Z)) +
+  geom_line()
+```
+
+
+## Example {data-name="Copulas"}
+
+```{r}
+#| echo: false
+U <- pnorm(Z)
+Y <- qgev(U, loc = 10, scale = 5, shape = 0.1)
+```
+
+```{r}
+#| echo: false
+tibble(
+  Y = Y
+) |>
+  mutate(
+    time = row_number()
+  ) |>
+  ggplot(aes(x = time, y = Y)) +
+  geom_line()
+```
+
+## Example {data-name="Copulas"}
+
+```{r}
+#| echo: TRUE
+U <- pnorm(Z)
+Y <- qgev(U, loc = 10, scale = 5, shape = 0.1)
+```
+
+```{r}
+#| echo: false
+tibble(
+  Y = Y
+) |>
+  mutate(
+    time = row_number()
+  ) |>
+  ggplot(aes(x = time, y = Y)) +
+  geom_line()
+```
+
+## Example {data-name="Copulas"}
+
+```{r}
+tibble(
+  Z = Z,
+  U = U,
+  Y = Y
+) |>
+  mutate(
+    time = row_number()
+  ) |>
+  pivot_longer(
+    cols = c(Z, U, Y),
+    names_to = "variable",
+    values_to = "value"
+  ) |>
+  mutate(
+    variable = fct_relevel(variable, "Z", "U") |> 
+      fct_recode(
+        "Gaussian" = "Z",
+        "Uniform" = "U",
+        "GEV" = "Y"
+      )
+  ) |> 
+  ggplot(aes(x = time, y = value)) +
+  geom_line() +
+  facet_wrap(~variable, scales = "free_y")
+```
+
+## Example {data-name="Copulas"}
+
+```{r}
+#| echo: TRUE
+Q <- make_AR_prec_matrix(dim = 60, rho = -0.8)
+```
+
+```{r}
+Z <- rmvn.sparse(n = 1, mu = rep(0, nrow(Q)), CH = Cholesky(Q)) |> 
+  as.numeric()
+U <- pnorm(Z)
+Y <- qgev(U, loc = 10, scale = 5, shape = 0.1)
+
+tibble(
+  Z = Z,
+  U = U,
+  Y = Y
+) |>
+  mutate(
+    time = row_number()
+  ) |>
+  pivot_longer(
+    cols = c(Z, U, Y),
+    names_to = "variable",
+    values_to = "value"
+  ) |>
+  mutate(
+    variable = fct_relevel(variable, "Z", "U") |> 
+      fct_recode(
+        "Gaussian" = "Z",
+        "Uniform" = "U",
+        "GEV" = "Y"
+      )
+  ) |> 
+  ggplot(aes(x = time, y = value)) +
+  geom_line() +
+  facet_wrap(~variable, scales = "free_y")
+```
+
+## What's going on? {data-name="Copulas" style="font-size:60%"}
+
+
+* $y_t$ is marginally $\mathrm{GEV}(\mu, \sigma, \xi)$
+
+::: {style="font-size:80%"}
+$$
+\log f(y_t \vert \mu, \sigma, \xi) = - n\log\sigma - (1 + \frac{1}{\xi}) \sum_{i=1}^{n}{\log\left(1 + \xi\left[\frac{z_i - \mu}{\sigma} \right]\right)} - \sum_{i=1}^{n}{\left(1 + \xi \left[ \frac{z_i - \mu}{\sigma} \right]\right)}^{-1/\xi}
+$$
+:::
+
+* $\mathbf Y$ has a Gaussian AR(1) copula
+
+$$
+\begin{aligned}
+\log c(\mathbf{u}) &\propto \frac{1}{2}\log|\mathbf{Q}| - \frac{1}{2}\mathbf{z}^T\mathbf{Q}\mathbf{z} + \frac{1}{2}\mathbf{z}^T\mathbf{z} \\
+u_t &= F_{\mathrm{GEV}}(y_t \vert \mu, \sigma, \xi) \\
+z_t &= \Phi^{-1}(u_t)
+\end{aligned}
+$$
+
+* How to estimate all of this?
+
+## Copulas {data-name="Copulas"}
+
+::: {style="font-size:65%; margin-top:20px;"}
+
+**Sklar's Theorem**: For any multivariate distribution $H$, there exists a unique copula $C$ such that:
+
+$$
+H(\mathbf x) = C(F_1(x_1), \dots, F_d(x_d))
+$$
+
+where $F_i$ are marginal distributions. 
+
+----------
+
+
+We can also write this as a (log) density
+
+$$
+\begin{aligned}
+h(x) &= c(F_1(x_1), \dots, F_d(x_d)) \prod_{i=1}^d f_i(x_i) \\
+\log h(\mathbf x) &= \log c\left(F_1(x_1), \dots, F_d(x_d)\right) + \sum_{i=1}^d \log f_i(x_i)
+\end{aligned}
+$$
+
+:::
+
+## Have no fear {data-name="Copulas"}
+
+![](images/predator.jpg){fig-align="center"}
+
+## Stan Model {data-name="Copulas" style="font-size:60%"}
+
+::: {.columns}
+::: {.column width=50%}
+```{stan}
+#| eval: false
+#| echo: true
+#| output.var: ar1_gev1
+data {
+  int n_obs;
+  vector[n_obs] y;
+}
+
+transformed data {
+  real min_y = min(y);
+}
+
+parameters {
+  real<lower = -1, upper = 1> rho;
+  real<lower = 0> sigma;
+  real<lower = 0> xi;
+  real<lower = 0, upper = min_y + sigma / xi> mu;
+}
+
+model {
+  vector[n_obs] U;
+  target += gev_lpdf(y | mu, sigma, xi);
+  for (i in 1:n_obs) {
+    U[i] = gev_cdf(y[i] | mu, sigma, xi);
+  }
+  target += normal_copula_ar1_lpdf(U | rho);
+
+  // Priors
+  target += std_normal_lpdf(rho);
+  target += exponential_lpdf(sigma | 1);
+  target += exponential_lpdf(xi | 1);
+}
+```
+:::
+::: {.column width=50%}
+
+```{stan}
+#| eval: false
+#| echo: true
+#| output.var: ar1_
+real normal_ar1_lpdf(vector x, real rho) {
+  int N = num_elements(x);
+  real out;
+  real log_det = - (N - 1) * (log(1 + rho) + log(1 - rho)) / 2;
+  vector[N] q;
+  real scl = sqrt(1 / (1 - rho^2));
+  
+  q[1:(N - 1)] = scl * (x[1:(N - 1)] - rho * x[2:N]);
+  q[N] = x[N];
+  
+  out = log_det - dot_self(q) / 2;
+  
+  return out;
+}
+
+real normal_copula_ar1_lpdf(vector U, real rho) {
+  int N = rows(U);
+  vector[N] Z = inv_Phi(U);
+  return normal_ar1_lpdf(Z | rho) + dot_self(Z) / 2;
+}
+```
+
+![](images/stanfit1.png)
+:::
+::: 
 ## Introduction {data-name="Background"}
 
-::::: {.columns style="font-size:70%"}
+::: {.columns style="font-size:70%"}
 ::: {.column width="70%"}
 -   UKCP Local Projections on a 5km grid over the UK (1980-2080) [@metoffi]
 -   Challenge: Modeling maximum daily precipitation in yearly blocks
@@ -46,41 +303,39 @@ options(width = 648)
 ::: {.column width="30%"}
 ![](images/ukcp_data.png){width="100%"}
 :::
-:::::
+:::
 
 ## Calculating Multivariate Normal Densities
 
-::::: {.columns style="font-size:60%"}
+::: {.columns style="font-size:60%"}
 $$
 \log f(\mathbf{x}) \propto \frac{1}{2}\left(\log |\mathbf{Q}| - \mathbf{x}^T\mathbf{Q}\mathbf{x}\right)
 $$
 
 ::: {.column width="50%"}
-
 ### Computational challenges
+
 1.  **Log Determinant**: $\log |\mathbf{Q}|$
-    - Constant for a given precision matrix
+    -   Constant for a given precision matrix
 2.  **Quadratic Form**: $\mathbf{x}^T\mathbf{Q}\mathbf{x}$
-    - Needs calculation for each density evaluation
+    -   Needs calculation for each density evaluation
 :::
 
 ::: {.column width="50%"}
-
 ### Spatial Model Considerations
 
-* Some models (e.g., ICAR) avoid log determinant calculation
-* Efficient computation crucial for large-scale applications
-* Fast algorithms when $\mathbf{Q}$ is sparse [@rue2001; @rue2005]
-
+-   Some models (e.g., ICAR) avoid log determinant calculation
+-   Efficient computation crucial for large-scale applications
+-   Fast algorithms when $\mathbf{Q}$ is sparse [@rue2001; @rue2005]
 :::
-:::::
+:::
 
 ## Spatial Models
 
-::::::::::::::: {style="font-size:50%"}
+::: {style="font-size:50%"}
 #### Conditional Autoregression (CAR) [@besag1974]
 
-::::: columns
+::: columns
 ::: {.column width="50%"}
 -   $\mathbf{D}$ is a diagonal matrix with $D_{ii} = n_i$, the number of neighbours of $i$
 -   $\mathbf{A}$ is the adjacency matrix with $A_{ij} = A_{ji} = 1$ if $i \sim j$
@@ -94,13 +349,13 @@ $$
 \end{aligned}
 $$
 :::
-:::::
+:::
 
 ------------------------------------------------------------------------
 
-
 #### Intrinsic Conditional Autoregression (ICAR) [@besag1991]
-::::: columns
+
+::: columns
 ::: {.column width="50%"}
 -   $\alpha = 1$, so $\mathbf Q$ is singular, but constant
 -   Don't have to calculate $\log |\mathbf{Q}|$
@@ -114,14 +369,14 @@ $$
 \end{aligned}
 $$
 :::
-:::::
+:::
 
 ------------------------------------------------------------------------
 
-
-::::: columns
+::: columns
 ::: {.column width="50%"}
 #### BYM (Besag-York-Mollié) Model [@besag1991]
+
 -   $\mathbf{u}$ is the structured spatial component (Besag model)
 -   $\mathbf{v}$ is the unstructured component (i.i.d. normal)
 :::
@@ -135,14 +390,14 @@ $$
 \end{aligned}
 $$
 :::
-:::::
+:::
 
 ------------------------------------------------------------------------
 
-
-::::: columns
+::: columns
 ::: {.column width="50%"}
-#### BYM2 Model [@riebler2016;   @simpson2015]
+#### BYM2 Model [@riebler2016; @simpson2015]
+
 -   $\rho$ models how much of variance is spatial
 -   $s$ is a scaling factor chosen to make $\mathrm{Var}(\mathbf u_i) \approx 1$
 :::
@@ -156,12 +411,12 @@ $$
 \end{aligned}
 $$
 :::
-:::::
-:::::::::::::::
+:::
+:::
 
-## Spatial Modeling on Parameter-level
+## Spatial Modeling on Parameter-level [@morris2019]
 
-::::: {.columns style="font-size:50%"}
+::: {.columns style="font-size:50%"}
 ::: {.column width="45%"}
 -   $\mu$: location parameter
     -   $\mu = \mu_0 \left(1 + \Delta \left(t - t_0\right)\right)$
@@ -181,11 +436,11 @@ $$
 ::: {.column width="55%"}
 ![](images/facet_constrained.png)
 :::
-:::::
+:::
 
 ## From Parameter-level to Data-level Dependence
 
-::::: {.columns style="font-size:60%"}
+::: {.columns style="font-size:60%"}
 ::: {.column width="50%"}
 ### Parameter-level Dependence
 
@@ -201,7 +456,7 @@ $$
 -   Enhances spatial risk assessment
 -   Better variance estimates
 :::
-:::::
+:::
 
 ::: {style="font-size:65%; margin-top:20px;"}
 **Sklar's Theorem**: For any multivariate distribution $H$, there exists a unique copula $C$ such that:
@@ -215,11 +470,13 @@ where $F_i$ are marginal distributions. We can also write this as a density
 $$
 h(x) = c(F_1(x_1), \dots, F_d(x_d)) \prod_{i=1}^d f_i(x_i)
 $$
+
 :::
 
 ## Our Approach: Matérn-like Gaussian Copula
 
-::::: {style="font-size:55%"}
+::: {style="font-size:55%"}
+
 $$
 \begin{gathered}
 \log h(\mathbf x) = \log c\left(F_1(x_1), \dots, F_d(x_d)\right) + \sum_{i=1}^d \log f_i(x_i)
@@ -228,7 +485,7 @@ $$
 
 ------------------------------------------------------------------------
 
-:::: columns
+::: columns
 ### Marginal CDFs
 
 ::: {.column width="50%"}
@@ -245,17 +502,18 @@ u_i &= F_{\mathrm{GEV}}(x_i \vert \mu_i, \sigma_i, \xi_i)
 \end{aligned}
 $$
 :::
-::::
+:::
 
 ------------------------------------------------------------------------
 
-:::: columns
+::: columns
 ### Gaussian Copula
 
 ::: {.column width="50%"}
 -   Matérn-like precision matrix $\mathbf{Q}$ [@lindgren2011]
--   Scaled so $\boldsymbol{\Sigma} = \mathbf{Q}^{-1}$ is correlation matrix
 -   If $\mathbf{Q} = \mathbf{I}$ simplifies to independent margins
+-   Scaled so $\boldsymbol{\Sigma} = \mathbf{Q}^{-1}$ is correlation matrix
+-   Need to calculate marginal variances [@rue2005a; @rue2007; @rue2009]
 -   How to generate, scale and compute with $\mathbf{Q}$ quickly (for MCMC)?
 :::
 
@@ -267,19 +525,19 @@ $$
 \end{aligned}
 $$
 :::
-::::
-:::::
+:::
+:::
 
 ## The Precision Matrix {data-name="Methods"}
 
-:::::: {style="font-size:60%"}
+::: {style="font-size:60%"}
 $\mathbf Q$ defined as Kronecker sum of two AR(1) precision matrices, similar to [@lindgren2011]
 
 $$
 \mathbf{Q} = \left( \mathbf{Q}_{\rho_1} \otimes \mathbf{I_{n_2}} + \mathbf{I_{n_1}} \otimes \mathbf{Q}_{\rho_2} \right)^{\nu + 1}, \quad \nu \in \{0, 1, 2\}
 $$
 
-::::: {.columns style="font-size:80%"}
+::: {.columns style="font-size:80%"}
 ::: {.column width="50%"}
 $$
 \mathbf{Q}_{\rho_{1}} = \frac{1}{1-\rho_{1}^2}
@@ -314,12 +572,12 @@ $$
 \dots & \dots & \cdots & \frac{-\rho_1}{(1-\rho_1^2)} \mathbf{I_{n_2}} & \frac{1}{(1-\rho_1^2)}\mathbf{I_{n_2}} + \mathbf{Q_{\rho_2}}
 \end{bmatrix}^{\nu + 1}
 $$
-:::::
-::::::
+:::
+:::
 
 ## Eigendecomposition
 
-::::: {.columns style="font-size:65%"}
+::: {.columns style="font-size:65%"}
 Because of how $\mathbf{Q}$ is defined [@horn1991], we know that
 
 $$
@@ -354,7 +612,7 @@ $$
 
 -   Problem: $\boldsymbol \Sigma_{ii} = \left(\mathbf Q^{-1} \right)_{ii} \neq  1$
 -   Solution: $\mathbf{\widetilde  Q} = \mathbf{D}\mathbf{Q}\mathbf{D}$, where $\mathbf D_{ii} = \sqrt{\boldsymbol \Sigma_{ii}}$
-:::::
+:::
 
 ## Marginal Standard Deviations
 
@@ -378,7 +636,7 @@ $$
 
 ## Marginal Standard Deviations
 
-::::: {.columns style="font-size:75%"}
+::: {.columns style="font-size:75%"}
 ::: {.column width="58%"}
 ```{r}
 #| echo: true
@@ -414,7 +672,7 @@ msd <- function(Q1, Q2) {
 }
 ```
 :::
-:::::
+:::
 
 ::: {style="font-size:75%"}
 ```{r}
@@ -433,8 +691,7 @@ bench::mark(
 ## Calculating the (non-copula) density
 
 ::: {style="font-size:70%"}
-The Gaussian log pdf is 
-$$
+The Gaussian log pdf is $$
 \log f(\mathbf{u} \vert \mathbf{Q}) \propto \frac{1}{2}\left(\log|\mathbf{Q}| - \mathbf{z}^T\mathbf{Q}\mathbf{z}\right)
 $$
 
@@ -473,8 +730,8 @@ $$
 
 ## Folded Circulant Approximation
 
-:::::::::::: {style="font-size:40%"}
-::::: columns
+::: {style="font-size:40%"}
+::: columns
 ::: {.column width="40%"}
 ### AR(1) precision
 
@@ -493,11 +750,11 @@ $$
 \end{bmatrix}
 $$
 :::
-:::::
+:::
 
 ------------------------------------------------------------------------
 
-::::: columns
+::: columns
 ::: {.column width="40%"}
 ### Circulant Approximation
 
@@ -516,11 +773,11 @@ $$
 \end{bmatrix}
 $$
 :::
-:::::
+:::
 
 ------------------------------------------------------------------------
 
-::::: columns
+::: columns
 ::: {.column width="40%"}
 ### Folded Circulant Approximation [@kent2022; @mondal2018]
 
@@ -539,10 +796,109 @@ $$
 \end{bmatrix}
 $$
 :::
-:::::
-::::::::::::
+:::
+:::
 
-## Benchmark: Density Computations {data-name="Results"}
+## Exact Stan Model {data-name="Results" style="font-size:60%"}
+
+```{stan}
+#| echo: true
+#| eval: false
+#| output.var: matern_copula
+real matern_copula_exact_lpdf(matrix Z, int dim1, real rho1, int dim2, real rho2, int nu) {
+  int n_obs = cols(Z);
+  int D = dim1 * dim2;
+  tuple(matrix[dim1, dim1], vector[dim1]) E1 = ar1_precision_eigen(dim1, rho1);
+  tuple(matrix[dim2, dim2], vector[dim2]) E2 = ar1_precision_eigen(dim2, rho2);
+
+  real log_det = 0;
+  real quadform_sum = 0;
+
+  vector[D] marginal_sds = marginal_sd(E1, E2, nu);
+
+  for (i in 1:dim1) {
+    for (j in 1:dim2) {
+      vector[D] v = kronecker(E1.1[, i], E2.1[, j]);
+      v = v .* marginal_sds;  
+      real norm_v = sqrt(sum(square(v)));
+      v /= norm_v;  
+      
+      real lambda = pow(E1.2[i] + E2.2[j], nu + 1) * square(norm_v);
+      log_det += log(lambda);
+      
+      row_vector[n_obs] q = v' * Z;  
+      quadform_sum += dot_self(q) * lambda;
+    }
+  }
+
+  real z_squared = sum(columns_dot_self(Z));
+
+  return -0.5 * (quadform_sum - n_obs * log_det - z_squared);
+}
+```
+
+## Approximation {style="font-size:50%"}
+
+```{stan}
+#| echo: true
+#| eval: false
+#| output.var: fold_data
+vector fold_data(vector x, int n1, int n2) {
+  vector[4 * n1 * n2] folded;
+  for (i in 1:n1) {
+    for (j in 1:n2) {
+      int idx = (i - 1) * n2 + j;
+      folded[(i - 1) * 2 * n2 + j] = x[idx];
+      folded[(i - 1) * 2 * n2 + (2 * n2 - j + 1)] = x[idx];
+      folded[(2 * n1 - i) * 2 * n2 + j] = x[idx];
+      folded[(2 * n1 - i) * 2 * n2 + (2 * n2 - j + 1)] = x[idx];
+    }
+  }
+  return folded;
+}
+```
+
+
+```{stan}
+#| echo: true
+#| eval: false
+#| output.var: base_matrix
+complex_matrix create_base_matrix_and_rescale_eigenvalues(int dim1, int dim2, real rho1, real rho2, int nu) {
+  
+  matrix[dim2, dim1] c = make_base_matrix(dim1, dim2, rho1, rho2);
+
+  // Compute the eigenvalues and marginal standard deviation
+  complex_matrix[dim2, dim1] sqrt_eigs = pow(fft2(c), (nu + 1.0) / 2.0);
+  complex_matrix[dim2, dim1] inv_sqrt_eigs = pow(sqrt_eigs, -1);
+  real msd = get_real(inv_fft2(inv_sqrt_eigs)[1, 1]);
+  sqrt_eigs *= msd;
+  
+  return sqrt_eigs;
+}
+```
+
+
+```{stan}
+#| echo: true
+#| eval: false
+#| output.var: folded_copula
+real matern_folded_copula_lpdf(matrix Z, int dim1, int dim2, real rho1, real rho2, int nu) {
+  int n_obs = cols(Z);
+  complex_matrix[2 * dim2, 2 * dim1] eigs = create_base_matrix_and_rescale_eigenvalues(2 * dim1, 2 * dim2, rho1, rho2, nu);
+  real quad_forms = 0;
+  real log_det = sum(log(get_real(eigs)));
+  for (i in 1:n_obs) {
+    vector[4 * dim1 * dim2] Z_fold = fold_data(Z[, i], dim1, dim2);
+    vector[4 * dim1 * dim2] Qz = matvec_prod(eigs, Z_fold);
+    quad_forms += dot_product(Z_fold, Qz) - dot_self(Z_fold);
+  } 
+  return - 0.5 * (quad_forms - n_obs * log_det);
+}
+```
+
+
+
+## Benchmark: Density Computations
 
 ```{r}
 read_csv(here::here("presentation", "data", "benchmark_all.csv")) |> 
@@ -579,43 +935,13 @@ read_csv(here::here("presentation", "data", "benchmark_all.csv")) |>
   ) |> 
   tab_caption(
     md("Benchmarking how long it takes to evaluate the density of a Mátern($\\nu$)-like field with correlation parameter $\\rho$, either unscaled or scaled to have unit marginal variance")
-  )
+  )  |> 
+  tab_footnote(
+    md("See [https://bggj.is/materneigenpaper/](https://bggj.is/materneigenpaper/) for a description of algorithms and [https://github.com/bgautijonsson/stdmatern](https://github.com/bgautijonsson/stdmatern) for implementations")
+  ) |> 
+  opt_row_striping(TRUE)
+
 ```
-
-## Benchmark: Maximum Likelihood
-
-::::: {.columns style="font-size:50%"}
-::: {.column width="65%"}
-![](images/bench_ml_bias.png)
-:::
-
-::: {.column width="35%"}
-<br> <br>
-
-```{r}
-read_csv(here::here("presentation", "data", "ml_bench_speed.csv")) |> 
-  rename(fold = Folded, circ = Circulant) |> 
-  gt() |> 
-  cols_hide(
-    c(circ, d_2)
-  ) |> 
-  cols_label(
-    dim = "Grid Size",
-    fold = "Time",
-    d_1 = "Speed-Up",
-    circ = "Time",
-    d_2 = "Speed-Up"
-  ) |> 
-  tab_spanner(
-    label = "Folded",
-    columns = 3:4
-  ) |> 
-  tab_caption(
-    md("Benchmarking speed of ML computations")
-  )
-```
-:::
-:::::
 
 ## Approximating the Correlation Matrix
 
@@ -623,7 +949,7 @@ read_csv(here::here("presentation", "data", "ml_bench_speed.csv")) |>
 
 ## Data Generation
 
-::::: {.columns style="font-size:60%"}
+::: {.columns style="font-size:60%"}
 ```{r}
 #| echo: true
 #| cache: true
@@ -659,11 +985,11 @@ apply(X, 1, var) |> hist()
 apply(X, 1, mean) |> hist()
 ```
 :::
-:::::
+:::
 
 ## Conclusion and Future Work {data-name="Conclusion"}
 
-::::: {.columns style="font-size:60%"}
+::: {.columns style="font-size:60%"}
 ::: {.column width="50%"}
 ### Key Results
 
@@ -691,9 +1017,9 @@ My thanks to my advisor and committee
 -   Birgir Hrafnkelsson (PI)
 -   Raphaël Huser
 -   Stefan Siegert
-:::::
+:::
 
 # References
 
-::: {#refs style="font-size:60%"}
+::: {#refs style="font-size:55%"}
 :::
