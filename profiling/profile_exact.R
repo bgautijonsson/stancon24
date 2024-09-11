@@ -5,9 +5,9 @@ library(tidyverse)
 library(loo)
 exact <- cmdstan_model(here::here("profiling", "Stan", "exact.stan"))
 
-dim <- c(10, 10)
-rho <- c(0.4, 0.3)
-nu <- 0
+dim <- c(12, 12)
+rho <- c(0.7, 0.5)
+nu <- 2
 n_obs <- 1
 mu <- 6
 sigma <- 2

@@ -874,6 +874,8 @@ vector matern_cond_loglik(vector y, int dim1, real rho1, int dim2, real rho2, in
   }
 }
 ```
+
+![](images/loo_cv.png)
 :::
 :::
 

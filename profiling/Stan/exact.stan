@@ -144,7 +144,7 @@ functions {
 
         real lambda = pow(E1.2[i] + E2.2[j], nu + 1) * square(norm_v);
         
-        g += v * lambda * v' * y;
+        g += lambda * v * v' * y;
         tau_tilde += square(v) * lambda;
       }
     }
@@ -233,6 +233,8 @@ model {
   // Priors
   target += exponential_lpdf(xi | 1);
   target += std_normal_lpdf(rho);
+  target += exponential_lpdf(sigma | 1);
+  target += normal_lpdf(mu | 6, 3);
 }
 
 generated quantities {
